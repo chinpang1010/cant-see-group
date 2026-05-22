@@ -1,0 +1,541 @@
+/* --- 主頁 style.css --- */
+
+:root {
+    --light-green: #e8e59b;      
+    --olive-green: #c4c197;      
+    --yellow-green: #FFFDC3;     
+    --grey: #DDDDCC;             
+    --nav-bg: #fbf3dd;           
+    --text-dark: #4a4e3b;
+    --bg-color: #faf9f6;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Lato', sans-serif;
+    background-color: var(--bg-color); 
+    color: #333;
+}
+
+/* --- 導覽列設定 --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 4vw;
+    background-color: var(--nav-bg);
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000; 
+}
+
+.nav-logo {
+    flex: 1;
+    text-align: left;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.nav-left, .nav-right { flex: 1; }
+.nav-right {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2rem;
+    align-items: center;
+}
+
+.logo-link {
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.3s;
+}
+
+.logo-link:hover {
+    opacity: 0.7;
+}
+
+.login {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+/* --- 主視覺區塊 (Hero Section) --- */
+.hero {
+    position: relative;
+    height: 85vh;
+    background: linear-gradient(135deg, var(--grey) 0%, var(--olive-green) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(5rem, 12vw, 10rem); 
+    font-weight: 400;
+    color: var(--yellow-green); 
+    letter-spacing: -2px;
+    line-height: 1;
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.1);
+}
+
+.hero-subtitle {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    color: #ffffff;
+    font-weight: 400;
+    letter-spacing: 1px;
+}
+
+/* --- Record 按鈕樣式 --- */
+.record-btn {
+    margin-top: 1.5rem;
+    padding: 0.8rem 2.5rem;
+    border: none;
+    border-radius: 50px;
+    background-color: #ffffff;
+    color: var(--olive-green);
+    font-family: 'Lato', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    text-decoration: none; 
+    display: inline-block; 
+}
+
+.record-btn:hover {
+    background-color: var(--light-green); 
+    color: #333;
+}
+
+/* --- 右下角聊天按鈕 --- */
+.chat-btn {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    width: 55px;
+    height: 55px;
+    background-color: #4a4e3b; 
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--yellow-green);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+}
+
+.chat-btn:hover {
+    transform: scale(1.05);
+}
+
+/* --- 衣櫃展示區樣式 --- */
+.wardrobe-section {
+    position: relative;
+    padding: 5rem 4vw;
+    background-color: #fcfbfa; 
+    min-height: 40vh;
+}
+
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    text-align: center;
+    color: var(--text-dark);
+    margin-bottom: 3rem;
+    letter-spacing: 1px;
+}
+
+.wardrobe-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3rem; 
+    flex-wrap: wrap;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.wardrobe-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem; 
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.wardrobe-item:hover {
+    transform: translateY(-8px); 
+}
+
+.wardrobe-image-placeholder {
+    width: 250px;  
+    height: 380px; 
+    background-color: transparent; 
+    border: none; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--olive-green);
+}
+
+.wardrobe-image-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; 
+}
+
+.wardrobe-item h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
+.add-wardrobe-btn {
+    position: absolute;
+    bottom: 2rem;
+    right: 4vw;
+    width: 40px;
+    height: 40px;
+    background-color: var(--olive-green);
+    color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    line-height: 38px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.add-wardrobe-btn:hover {
+    background-color: var(--light-green);
+    color: var(--text-dark);
+    transform: scale(1.05);
+}
+
+.add-wardrobe-btn.disabled {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.9);
+}
+
+/* --- 衣櫃展開佈局 --- */
+.wardrobe-layout {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    transition: all 0.5s ease;
+    width: 100%;
+}
+
+.wardrobe-layout.opened {
+    justify-content: flex-start;
+    align-items: stretch; 
+}
+
+.wardrobe-item.hidden {
+    display: none;
+}
+
+/* --- 右側衣服展示區 --- */
+.clothes-display-area {
+    flex: 1; 
+    background-color: #fff;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 1.5rem;
+    grid-auto-rows: max-content; 
+    overflow-y: auto; 
+    animation: fadeInRight 0.5s ease forwards;
+}
+
+@keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.cloth-display-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.cloth-display-item:hover {
+    transform: translateY(-5px); 
+}
+
+.cloth-image-placeholder {
+    width: 100%;
+    height: 140px;
+    background-color: var(--grey);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    overflow: hidden;
+}
+
+.cloth-image-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cloth-display-item span {
+    font-family: 'Lato', sans-serif;
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: center;
+}
+
+/* --- 返回按鈕樣式 --- */
+.back-btn {
+    background: none;
+    border: none;
+    color: var(--olive-green);
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-bottom: 2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s;
+    margin-left: max(4vw, calc((100% - 1200px) / 2)); 
+}
+
+.back-btn:hover {
+    color: var(--text-dark);
+}
+
+/* --- 新增衣服卡片 (「+」按鈕) --- */
+.add-cloth-btn-card {
+    background-color: transparent;
+    border: 2px dashed var(--olive-green);
+    color: var(--olive-green);
+    font-size: 3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    height: 140px; 
+    align-self: start; 
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.add-cloth-btn-card:hover {
+    background-color: rgba(196, 193, 151, 0.15); 
+    color: var(--text-dark);
+    border-color: var(--text-dark);
+    transform: translateY(-5px);
+}
+
+/* --- Modal 彈出視窗樣式 --- */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 2000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    background-color: rgba(0,0,0,0.5); 
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+.modal-content {
+    background-color: var(--bg-color);
+    padding: 2.5rem;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 15px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.close-modal {
+    color: #aaa;
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close-modal:hover {
+    color: var(--text-dark);
+}
+
+.modal-title {
+    font-family: 'Playfair Display', serif;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    text-align: center;
+}
+
+/* --- 共用表單與上傳按鈕樣式 --- */
+.record-form { display: flex; flex-direction: column; gap: 1.2rem; }
+.form-group-row { display: flex; gap: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+.form-group label { font-size: 0.9rem; font-weight: 700; color: var(--olive-green); }
+
+.form-group input, .form-group select {
+    padding: 0.7rem; border: 1px solid var(--grey); border-radius: 8px;
+    font-family: 'Lato', sans-serif; background-color: #fff; color: var(--text-dark);
+    outline: none; transition: border-color 0.3s; font-size: 0.95rem; width: 100%;
+}
+
+.form-group input:focus, .form-group select:focus { border-color: var(--olive-green); }
+
+.minimal-upload-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    color: var(--olive-green); font-family: 'Lato', sans-serif; font-weight: 700;
+    font-size: 1.1rem; cursor: pointer; transition: color 0.3s;
+}
+
+.minimal-upload-btn:hover { color: var(--text-dark); }
+.success-icon { color: #88B04B; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.success-text { color: #88B04B; }
+
+.save-btn {
+    padding: 1rem; background-color: var(--light-green); color: var(--text-dark);
+    border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 700;
+    cursor: pointer; transition: background 0.3s; font-family: 'Lato', sans-serif;
+}
+
+.save-btn:hover { background-color: var(--olive-green); color: #fff; }
+
+/* --- Logged In State Styles --- */
+.user-profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    font-family: 'Lato', sans-serif;
+}
+
+.logout-btn {
+    font-family: 'Lato', sans-serif;
+    color: #a0a080; 
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: color 0.3s;
+    text-decoration: none;
+    margin-left: 1rem;
+    border-left: 1px solid var(--grey);
+    padding-left: 1rem;
+}
+
+.logout-btn:hover {
+    color: #333;
+}
+
+/* --- Footer Styles --- */
+.footer {
+    background-color: var(--text-dark); 
+    padding: 4rem 4vw 3rem 4vw;
+    border-top: 1px solid rgba(74, 78, 59, 0.08);
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem; 
+}
+
+.footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--olive-green);
+}
+
+.footer-links {
+    display: flex;
+    gap: 2.5rem; 
+    list-style: none;
+}
+
+.footer-links a {
+    font-family: 'Lato', sans-serif;
+    text-decoration: none;
+    color: var(--olive-green);
+    font-size: 0.95rem;
+    font-weight: 400;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.footer-links a:hover {
+    opacity: 1;
+    color: var(--text-dark); 
+}
+
+.footer-copyright {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    color: var(--olive-green);
+    opacity: 0.5; 
+    margin-top: 0.5rem;
+}
