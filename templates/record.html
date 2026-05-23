@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What2Wear | Record Outfit</title>
+    <link rel="stylesheet" href="/static/record.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-logo">
+            <a href="index.html" class="logo-link">What2Wear</a>
+        </div>
+        <div class="nav-right">
+            <span class="login">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Log In
+            </span>
+        </div>
+    </header>
+
+    <main class="record-container">
+        
+        <section class="left-panel panel">
+            <h2 class="panel-title">Details</h2>
+            <form class="record-form">
+                <div class="form-group">
+                    <label>Wardrobe</label>
+                    <select>
+                        <option value="">Select Wardrobe...</option>
+                        <option value="1">Wardrobe 1</option>
+                        <option value="2">Wardrobe 2</option>
+                        <option value="3">Wardrobe 3</option>
+                    </select>
+                </div>
+                
+                <div class="form-group-row">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date">
+                    </div>
+                    <div class="form-group">
+                        <label>Season</label>
+                        <select>
+                            <option>Spring</option>
+                            <option>Summer</option>
+                            <option>Autumn</option>
+                            <option>Winter</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Weather</label>
+                    <select>
+                        <option>Sunny</option>
+                        <option>Cloudy</option>
+                        <option>Rainy</option>
+                        <option>Windy</option>
+                        <option>Snowy</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Occasion</label>
+                    <select>
+                        <option>Casual</option>
+                        <option>Work</option>
+                        <option>Date</option>
+                        <option>Party</option>
+                        <option>Formal</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Rating</label>
+                    <div class="stars">
+                        <span>☆</span><span>☆</span><span>☆</span><span>☆</span><span>☆</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea rows="4" placeholder="Write down your thoughts about this outfit..."></textarea>
+                </div>
+            </form>
+        </section>
+
+        <section class="mid-panel panel">
+            <h2 class="panel-title">Your Closet</h2>
+            <div class="clothes-grid">
+                <div class="cloth-card">Top 1</div>
+                <div class="cloth-card">Top 2</div>
+                <div class="cloth-card">Pants 1</div>
+                <div class="cloth-card">Skirt 1</div>
+                <div class="cloth-card">Outerwear</div>
+                <div class="cloth-card">Shoes 1</div>
+                <div class="cloth-card">Accessory</div>
+                <div class="cloth-card">Bag 1</div>
+            </div>
+        </section>
+
+        <section class="right-panel panel">
+            <h2 class="panel-title">Outfit Canvas</h2>
+            
+            <div class="canvas-area">
+                <p>Click clothes left to add</p>
+            </div>
+
+            <div class="upload-section-minimal">
+                <label class="minimal-upload-btn">
+                    <span id="uploadIconWrapper">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    </span>
+                    <span id="uploadText">Upload Photo</span>
+                    <input type="file" id="photoUpload" accept="image/*" style="display: none;">
+                </label>
+            </div>
+
+            <button class="save-btn">Save Record</button>
+        </section>
+
+    </main>
+
+    <script src="/static/record.js"></script>
+</body>
+</html>

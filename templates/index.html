@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What2Wear | Sustainable Closet</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-logo">
+            <a href="index.html" class="logo-link">What2Wear</a>
+        </div>
+        <div class="nav-right">
+            <span class="login">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Log In
+            </span>
+        </div>
+    </header>
+
+    <main class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">What2Wear</h1>
+            <p class="hero-subtitle">Sustainable Essentials for Your Closet</p>
+            <a href="record.html" target="_blank" class="record-btn">Record</a>
+        </div>
+        
+        <div class="chat-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </div>
+    </main>
+
+    <section class="wardrobe-section">
+        <h2 class="section-title" id="wardrobeTitle">My Wardrobes</h2>
+        
+        <button id="backBtn" class="back-btn" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back
+        </button>
+
+        <div class="wardrobe-layout" id="wardrobeLayout">
+            
+            <div class="wardrobe-container" id="wardrobeContainer">
+                <div class="wardrobe-item" data-id="1">
+                    <div class="wardrobe-image-placeholder">
+                        <img src="/static/img/Wardrobe1.png" alt="Wardrobe 1">
+                    </div>
+                    <h3>Wardrobe 1</h3>
+                </div>
+            </div>
+
+            <div class="clothes-display-area" id="clothesDisplayArea" style="display: none;">
+                </div>
+
+        </div>
+
+        <button class="add-wardrobe-btn" id="addWardrobeBtn" title="Add Wardrobe">+</button>
+    </section>
+    <div id="addItemModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">Add New Item</h2>
+            
+            <form id="addItemForm" class="record-form">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="itemName" placeholder="e.g., White T-Shirt" required>
+                </div>
+                
+                <div class="form-group-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="itemCategory" required>
+                            <option value="">Select Category...</option>
+                            <option value="Top">Top</option>
+                            <option value="Bottom">Bottom</option>
+                            <option value="Accessory">Accessory</option>
+                            <option value="Shoes">Shoes</option>
+                            <option value="Socks">Socks</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Size</label>
+                        <select id="itemSize" required>
+                            <option value="">Select Size...</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group-row">
+                    <div class="form-group">
+                        <label>Color</label>
+                        <select id="itemColor" required>
+                            <option value="">Select Color...</option>
+                            <option value="Black">Black</option>
+                            <option value="White">White</option>
+                            <option value="Grey">Grey</option>
+                            <option value="Navy">Navy</option>
+                            <option value="Beige">Beige</option>
+                            <option value="Red">Red</option>
+                            <option value="Blue">Blue</option>
+                            <option value="Green">Green</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tag</label>
+                        <select id="itemTag" required>
+                            <option value="">Select Tag...</option>
+                            <option value="Casual">Casual</option>
+                            <option value="Formal">Formal</option>
+                            <option value="Work">Work</option>
+                            <option value="Sport">Sport</option>
+                            <option value="Party">Party</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="upload-section-minimal" style="justify-content: flex-start; margin-top: 0.5rem; margin-bottom: 1.5rem;">
+                    <label class="minimal-upload-btn">
+                        <span id="modalUploadIcon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        </span>
+                        <span id="modalUploadText">Upload Photo</span>
+                        <input type="file" id="modalPhotoUpload" accept="image/*" style="display: none;">
+                    </label>
+                </div>
+
+                <button type="submit" class="save-btn" style="width: 100%;">Add to Closet</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close-login-modal close-modal">&times;</span>
+            <h2 class="modal-title">Welcome Back</h2>
+            
+            <form id="loginForm" class="record-form">
+                <div class="form-group">
+                    <label>Account / Email</label>
+                    <input type="text" id="loginAccount" placeholder="Enter your account" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                </div>
+                
+                <button type="submit" class="save-btn" style="width: 100%; margin-top: 1rem;">Log In</button>
+                
+                <div style="text-align: center; margin-top: 1rem; font-size: 0.9rem; color: var(--text-dark);">
+                    Don't have an account? <a href="#" id="toSignupLink" style="color: var(--olive-green); font-weight: bold; text-decoration: none;">Sign Up</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="signupModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close-signup-modal close-modal">&times;</span>
+            <h2 class="modal-title">Create Account</h2>
+            
+            <form id="signupForm" class="record-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signupName" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Account / Email</label>
+                    <input type="email" id="signupEmail" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="Create a password" required>
+                </div>
+                
+                <button type="submit" class="save-btn" style="width: 100%; margin-top: 1rem;">Sign Up</button>
+                
+                <div style="text-align: center; margin-top: 1rem; font-size: 0.9rem; color: var(--text-dark);">
+                    Already have an account? <a href="#" id="toLoginLink" style="color: var(--olive-green); font-weight: bold; text-decoration: none;">Log In</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">What2Wear</div>
+            <ul class="footer-links">
+                <li><a href="#">About</a></li>
+                <li><a href="#">Contact</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+            </ul>
+            <p class="footer-copyright">&copy; 2026 What2Wear. Sustainable Closet. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
