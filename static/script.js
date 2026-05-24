@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let wardrobeCount = 1;
     const MAX_WARDROBES = 3;
+    let wardrobes = [];
+    let clothesData = [];
+    let currentClosetId = null;
 
     const wardrobeImages = [
         "/static/img/Wardrobe1.png", 
@@ -25,6 +28,68 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: "Black Skirt", type: "Skirt" },
         { name: "Denim Jacket", type: "Outerwear" }
     ];
+
+    function loadWardrobes() {
+        fetch('/api/wardrobes')
+            .then((res) => res.json())
+            .then((data) => {
+                wardrobes = data;
+                wardrobeCount = Math.min(data.length, MAX_WARDROBES);
+                renderWardrobes();
+                if (data.length > 0) {
+                    selectCloset(data[0].c_id);
+                }
+            })
+            .catch(() => {
+                renderWardrobes();
+            });
+    }
+
+    function loadClosetItems(closetId) {
+        currentClosetId = closetId;
+        fetch(`/api/closet/${closetId}/items`)
+            .then((res) => res.json())
+            .then((data) => {
+                clothesData = data.map((item) => ({
+                    name: item.item_name,
+                    type: item.category || item.tag || 'Item',
+                }));
+                if (wardrobeLayout.classList.contains('opened')) {
+                    renderClothes();
+                }
+            })
+            .catch(() => {
+                clothesData = dummyClothes;
+                renderClothes();
+            });
+    }
+
+    function renderWardrobes() {
+        if (!wardrobeContainer) return;
+        wardrobeContainer.innerHTML = '';
+        const items = wardrobes.length > 0 ? wardrobes.slice(0, MAX_WARDROBES) : [
+            { c_id: 1, c_name: 'Wardrobe 1' }
+        ];
+        items.forEach((wardrobe, index) => {
+            const newItem = document.createElement('div');
+            newItem.className = 'wardrobe-item';
+            newItem.dataset.id = wardrobe.c_id;
+            newItem.innerHTML = `
+                <div class="wardrobe-image-placeholder">
+                    <img src="${wardrobeImages[index] || wardrobeImages[0]}" alt="Wardrobe ${index + 1}">
+                </div>
+                <h3>${wardrobe.c_name}</h3>
+            `;
+            wardrobeContainer.appendChild(newItem);
+        });
+    }
+
+    function selectCloset(closetId) {
+        currentClosetId = closetId;
+        loadClosetItems(closetId);
+    }
+
+    loadWardrobes();
 
     // ==========================================
     // 1. 衣櫃展開與返回功能
@@ -45,7 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (backBtn) backBtn.style.display = 'inline-flex';
                 if (wardrobeTitle) wardrobeTitle.innerText = `Inside ${clickedItem.querySelector('h3').innerText}`;
 
-                renderClothes();
+                const closetId = Number(clickedItem.dataset.id) || 1;
+                selectCloset(closetId);
                 if (clothesDisplayArea) clothesDisplayArea.style.display = 'grid';
             }
         });
@@ -72,8 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!clothesDisplayArea) return;
         clothesDisplayArea.innerHTML = ''; 
         
+        const items = clothesData.length > 0 ? clothesData : dummyClothes;
+
         // 渲染衣服卡片
-        dummyClothes.forEach(cloth => {
+        items.forEach(cloth => {
             const clothEl = document.createElement('div');
             clothEl.className = 'cloth-display-item';
             clothEl.innerHTML = `
@@ -109,9 +177,40 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const itemName = document.getElementById('itemName')?.value || 'New Item';
             const itemCategory = document.getElementById('itemCategory')?.value || 'Misc';
-            dummyClothes.push({ name: itemName, type: itemCategory });
-            renderClothes();
-            closeItemModal();
+            const itemSize = document.getElementById('itemSize')?.value || '';
+            const itemColor = document.getElementById('itemColor')?.value || '';
+            const itemTag = document.getElementById('itemTag')?.value || '';
+
+            const payload = {
+                item_name: itemName,
+                size: itemSize,
+                color: itemColor,
+                category: itemCategory,
+                tag: itemTag,
+                image_url: '',
+                c_id: currentClosetId || 1,
+            };
+
+            fetch('/api/items', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            })
+                .then((response) => {
+                    if (!response.ok) throw new Error('新增衣物失敗');
+                    return response.json();
+                })
+                .then(() => {
+                    loadClosetItems(currentClosetId || 1);
+                    closeItemModal();
+                })
+                .catch(() => {
+                    dummyClothes.push({ name: itemName, type: itemCategory });
+                    renderClothes();
+                    closeItemModal();
+                });
         });
     }
 
