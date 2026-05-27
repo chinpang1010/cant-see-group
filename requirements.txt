@@ -1,0 +1,16 @@
+alembic
+click
+colorama
+oracledb
+Flask
+Flask-Login
+Flask-SQLAlchemy
+greenlet
+gunicorn
+itsdangerous
+Jinja2
+Mako
+MarkupSafe
+numpy
+SQLAlchemy
+Werkzeug
