@@ -40,38 +40,38 @@
                 <div class="form-group-row">
                     <div class="form-group">
                         <label>Date</label>
-                        <input type="date">
+                        <input type="date" id="recordDate">
                     </div>
                     <div class="form-group">
                         <label>Season</label>
-                        <select>
-                            <option>Spring</option>
-                            <option>Summer</option>
-                            <option>Autumn</option>
-                            <option>Winter</option>
+                        <select id="recordSeason">
+                            <option value="Spring">Spring</option>
+                            <option value="Summer">Summer</option>
+                            <option value="Autumn">Autumn</option>
+                            <option value="Winter">Winter</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Weather</label>
-                    <select>
-                        <option>Sunny</option>
-                        <option>Cloudy</option>
-                        <option>Rainy</option>
-                        <option>Windy</option>
-                        <option>Snowy</option>
+                    <select id="recordWeather">
+                        <option value="Sunny">Sunny</option>
+                        <option value="Cloudy">Cloudy</option>
+                        <option value="Rainy">Rainy</option>
+                        <option value="Windy">Windy</option>
+                        <option value="Snowy">Snowy</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>Occasion</label>
-                    <select>
-                        <option>Casual</option>
-                        <option>Work</option>
-                        <option>Date</option>
-                        <option>Party</option>
-                        <option>Formal</option>
+                    <select id="recordOccasion">
+                        <option value="Casual">Casual</option>
+                        <option value="Work">Work</option>
+                        <option value="Date">Date</option>
+                        <option value="Party">Party</option>
+                        <option value="Formal">Formal</option>
                     </select>
                 </div>
 
@@ -84,7 +84,7 @@
 
                 <div class="form-group">
                     <label>Notes</label>
-                    <textarea rows="4" placeholder="Write down your thoughts about this outfit..."></textarea>
+                    <textarea id="recordNote" rows="4" placeholder="Write down your thoughts about this outfit..."></textarea>
                 </div>
             </form>
         </section>
