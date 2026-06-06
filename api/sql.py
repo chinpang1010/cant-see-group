@@ -1,11 +1,11 @@
 from datetime import datetime
 from pathlib import Path
 
-from link import connection
+from api.link import connection
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-SCHEMA_PATH = ROOT_DIR / "schema.sql"
+SCHEMA_PATH = ROOT_DIR / "db/schema.sql"
 
 
 class DB:

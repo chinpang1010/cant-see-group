@@ -24,15 +24,16 @@ What2Wear is a Flask + SQLite prototype for the MIS205 DBMS group project. The s
 ```text
 cant-see-group/
 |-- app.py
-|-- link.py
 |-- requirements.txt
 |-- README.md
-|-- schema.sql
-|-- seed.sql
-|-- queries.sql
-|-- database.db
+|-- db/
+|   |-- schema.sql
+|   |-- seed.sql
+|   |-- queries.sql
+|   `-- database.db
 |-- api/
-|   `-- sql.py
+|   |-- sql.py
+|   `-- link.py
 |-- templates/
 |   |-- index.html
 |   `-- record.html
@@ -42,9 +43,6 @@ cant-see-group/
     |-- record.css
     |-- record.js
     `-- img/
-        |-- Wardrobe1.png
-        |-- Wardrobe2.png
-        `-- Wardrobe3.png
 ```
 
 ## Setup
