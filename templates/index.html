@@ -12,9 +12,10 @@
 <body>
     <header class="navbar">
         <div class="nav-logo">
-            <a href="index.html" class="logo-link">What2Wear</a>
+            <a href="/" class="logo-link">What2Wear</a>
         </div>
         <div class="nav-right">
+            <a href="/record" class="nav-record-link">Record</a>
             <span class="login">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 Log In
@@ -23,11 +24,14 @@
     </header>
 
     <main class="hero">
+        <img src="/static/img/back.png" class="hero-bg-img">
+        
         <div class="hero-content">
             <h1 class="hero-title">What2Wear</h1>
             <p class="hero-subtitle">Sustainable Essentials for Your Closet</p>
             <a href="record.html" target="_blank" class="record-btn">Record</a>
         </div>
+    </main>
         
         <div class="chat-btn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
@@ -41,6 +45,14 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             Back
         </button>
+
+        <div class="catalog-tools" id="catalogTools" style="display: none;">
+            <input type="search" id="searchInput" placeholder="Search clothes, color, tag...">
+            <select id="categoryFilter"><option value="">All Categories</option></select>
+            <select id="colorFilter"><option value="">All Colors</option></select>
+            <select id="tagFilter"><option value="">All Tags</option></select>
+            <button type="button" id="clearFiltersBtn">Clear</button>
+        </div>
 
         <div class="wardrobe-layout" id="wardrobeLayout">
             
@@ -60,12 +72,38 @@
 
         <button class="add-wardrobe-btn" id="addWardrobeBtn" title="Add Wardrobe">+</button>
     </section>
+
+    <section class="reports-section">
+        <h2 class="section-title">Usage Reports</h2>
+        <div class="report-summary">
+            <div><span>Closets</span><strong id="statClosets">0</strong></div>
+            <div><span>Items</span><strong id="statItems">0</strong></div>
+            <div><span>Outfits</span><strong id="statOutfits">0</strong></div>
+            <div><span>Records</span><strong id="statRecords">0</strong></div>
+        </div>
+        <div class="report-grid">
+            <div class="report-card">
+                <h3>Category Mix</h3>
+                <div id="categoryReport" class="report-list"></div>
+            </div>
+            <div class="report-card">
+                <h3>Most Worn</h3>
+                <div id="mostWornReport" class="report-list"></div>
+            </div>
+            <div class="report-card">
+                <h3>Least Used</h3>
+                <div id="leastWornReport" class="report-list"></div>
+            </div>
+        </div>
+    </section>
+
     <div id="addItemModal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
-            <h2 class="modal-title">Add New Item</h2>
+            <h2 class="modal-title" id="itemModalTitle">Add New Item</h2>
             
             <form id="addItemForm" class="record-form">
+                <input type="hidden" id="itemId">
                 <div class="form-group">
                     <label>Item Name</label>
                     <input type="text" id="itemName" placeholder="e.g., White T-Shirt" required>
@@ -78,6 +116,7 @@
                             <option value="">Select Category...</option>
                             <option value="Top">Top</option>
                             <option value="Bottom">Bottom</option>
+                            <option value="Outerwear">Outerwear</option>
                             <option value="Accessory">Accessory</option>
                             <option value="Shoes">Shoes</option>
                             <option value="Socks">Socks</option>
@@ -87,11 +126,14 @@
                         <label>Size</label>
                         <select id="itemSize" required>
                             <option value="">Select Size...</option>
+                            <option value="XS">XS</option>
                             <option value="S">S</option>
                             <option value="M">M</option>
                             <option value="L">L</option>
                             <option value="XL">XL</option>
                             <option value="XXL">XXL</option>
+                            <option value="F">F</option>
+                            <option value="24">24</option>
                         </select>
                     </div>
                 </div>
@@ -105,6 +147,7 @@
                             <option value="White">White</option>
                             <option value="Grey">Grey</option>
                             <option value="Navy">Navy</option>
+                            <option value="Cream">Cream</option>
                             <option value="Beige">Beige</option>
                             <option value="Red">Red</option>
                             <option value="Blue">Blue</option>
@@ -115,12 +158,25 @@
                         <label>Tag</label>
                         <select id="itemTag" required>
                             <option value="">Select Tag...</option>
-                            <option value="Casual">Casual</option>
-                            <option value="Formal">Formal</option>
-                            <option value="Work">Work</option>
-                            <option value="Sport">Sport</option>
-                            <option value="Party">Party</option>
+                            <option value="basic">basic</option>
+                            <option value="casual">casual</option>
+                            <option value="formal">formal</option>
+                            <option value="work">work</option>
+                            <option value="sport">sport</option>
+                            <option value="warm">warm</option>
+                            <option value="versatile">versatile</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="form-group-row">
+                    <div class="form-group">
+                        <label>Last Worn</label>
+                        <input type="date" id="itemLastWorn">
+                    </div>
+                    <div class="form-group">
+                        <label>Image URL</label>
+                        <input type="url" id="itemImageUrl" placeholder="Optional image URL">
                     </div>
                 </div>
 
@@ -134,7 +190,7 @@
                     </label>
                 </div>
 
-                <button type="submit" class="save-btn" style="width: 100%;">Add to Closet</button>
+                <button type="submit" class="save-btn" style="width: 100%;" id="itemSubmitBtn">Add to Closet</button>
             </form>
         </div>
     </div>
@@ -147,12 +203,12 @@
             <form id="loginForm" class="record-form">
                 <div class="form-group">
                     <label>Account / Email</label>
-                    <input type="text" id="loginAccount" placeholder="Enter your account" required>
+                    <input type="text" id="loginAccount" placeholder="Enter your account" value="student" required>
                 </div>
                 
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" value="1234" required>
                 </div>
                 
                 <button type="submit" class="save-btn" style="width: 100%; margin-top: 1rem;">Log In</button>
@@ -207,6 +263,6 @@
         </div>
     </footer>
 
-    <script src="/static/script.js"></script>
+    <script src="/static/script.js?v=image-upload-1"></script>
 </body>
 </html>
