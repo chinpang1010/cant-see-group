@@ -106,13 +106,13 @@ def seed_data():
         for row in DB.fetchall("SELECT c_id, c_name FROM CLOSET WHERE u_id = ?", (student_id,))
     }
     sample_items = [
-        (closet_ids["Daily Closet"], "White Cotton Tee", "M", "2026-05-01", "basic", "Top", "White", ""),
-        (closet_ids["Daily Closet"], "Blue Wide Jeans", "L", "2026-05-08", "casual", "Bottom", "Blue", ""),
-        (closet_ids["Daily Closet"], "Cream Knit Cardigan", "F", "2026-04-15", "warm", "Outerwear", "Cream", ""),
-        (closet_ids["Daily Closet"], "Black Canvas Sneakers", "24", "2026-05-10", "versatile", "Shoes", "Black", ""),
-        (closet_ids["Formal Closet"], "Navy Blazer", "M", "2026-05-05", "formal", "Outerwear", "Navy", ""),
-        (closet_ids["Formal Closet"], "Grey Pleated Skirt", "S", "2026-04-20", "work", "Bottom", "Grey", ""),
-        (closet_ids["Sport Closet"], "Green Training Top", "M", "2026-05-11", "sport", "Top", "Green", ""),
+        (closet_ids["Daily Closet"], "White Cotton Tee", "M", "2026-05-01", "basic", "Top", "White", "/static/img/student_clothes/white_tee.png"),
+        (closet_ids["Daily Closet"], "Blue Wide Jeans", "L", "2026-05-08", "casual", "Bottom", "Blue", "/static/img/student_clothes/blue_jeans.png"),
+        (closet_ids["Daily Closet"], "Cream Knit Cardigan", "F", "2026-04-15", "warm", "Outerwear", "Cream", "/static/img/student_clothes/cardigan.png"),
+        (closet_ids["Daily Closet"], "Black Canvas Sneakers", "24", "2026-05-10", "versatile", "Shoes", "Black", "/static/img/student_clothes/sneakers.png"),
+        (closet_ids["Formal Closet"], "Navy Blazer", "M", "2026-05-05", "formal", "Outerwear", "Navy", "/static/img/student_clothes/blazer.png"),
+        (closet_ids["Formal Closet"], "Grey Pleated Skirt", "S", "2026-04-20", "work", "Bottom", "Grey", "/static/img/student_clothes/skirt.png"),
+        (closet_ids["Sport Closet"], "Green Training Top", "M", "2026-05-11", "sport", "Top", "Green", "/static/img/student_clothes/training_top.png"),
     ]
 
     for item in sample_items:

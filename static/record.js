@@ -78,11 +78,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = `cloth-card${selected ? ' selected' : ''}`;
         card.dataset.itemId = item.item_id;
-        card.innerHTML = `
+        const imageUrl = firstValue(item.image_url);
+        let cardHtml = '';
+
+        if (imageUrl) {
+            cardHtml += `
+                <div style="width: 100%; height: 120px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
+                    <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.item_name)}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+            `;
+        }
+
+        cardHtml += `
             <div class="cloth-card-title">${escapeHtml(item.item_name)}</div>
             <div class="cloth-card-meta">${escapeHtml(firstValue(item.category) || firstValue(item.tag) || '')}</div>
             <div class="cloth-card-sub">${escapeHtml(firstValue(item.color) || '')}${item.size ? ` · ${escapeHtml(item.size)}` : ''}</div>
         `;
+
+        card.innerHTML = cardHtml;
+
         card.addEventListener('click', () => {
             const itemId = Number(card.dataset.itemId);
             if (selectedItemIds.includes(itemId)) {
@@ -93,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderClothItems(currentItems);
             renderCanvas();
         });
+        
         return card;
     }
 

@@ -46,13 +46,13 @@ INSERT OR IGNORE INTO CLOTH_COLOR (item_id, color) VALUES
     (7, 'Green');
 
 INSERT OR IGNORE INTO CLOTH_IMG (item_id, image_url) VALUES
-    (1, ''),
-    (2, ''),
-    (3, ''),
-    (4, ''),
-    (5, ''),
-    (6, ''),
-    (7, '');
+    (1, '/static/img/student_clothes/white_tee.png'),
+    (2, '/static/img/student_clothes/blue_jeans.png'),
+    (3, '/static/img/student_clothes/cardigan.png'),
+    (4, '/static/img/student_clothes/sneakers.png'),
+    (5, '/static/img/student_clothes/blazer.png'),
+    (6, '/static/img/student_clothes/skirt.png'),
+    (7, '/static/img/student_clothes/training_top.png');
 
 INSERT OR IGNORE INTO OUTFIT (outfit_id, u_id, outfit_name, note, created_date) VALUES
     (1, 1, 'Campus Comfort', 'Easy to move around campus all day.', '2026-05-20'),

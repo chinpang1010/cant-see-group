@@ -10,7 +10,7 @@ from api.sql import Closet, ClothItem, DB, Member, Outfit, Record, Reports, init
 
 app = Flask(__name__)
 app.secret_key = "wardrobe-secret-key"
-app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
 UPLOAD_DIR = Path(app.root_path) / "static" / "uploads"
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
