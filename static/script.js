@@ -9,12 +9,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const clothesDisplayArea = document.getElementById('clothesDisplayArea');
     const backBtn = document.getElementById('backBtn');
     const wardrobeTitle = document.getElementById('wardrobeTitle');
+    const catalogTools = document.getElementById('catalogTools');
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const colorFilter = document.getElementById('colorFilter');
+    const tagFilter = document.getElementById('tagFilter');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    const itemModal = document.getElementById('addItemModal');
+    const addItemForm = document.getElementById('addItemForm');
+    const itemModalTitle = document.getElementById('itemModalTitle');
+    const itemSubmitBtn = document.getElementById('itemSubmitBtn');
+    const modalUploadPhoto = document.getElementById('modalPhotoUpload');
+    const modalUploadIcon = document.getElementById('modalUploadIcon');
+    const modalUploadText = document.getElementById('modalUploadText');
+    const loginModal = document.getElementById('loginModal');
+    const signupModal = document.getElementById('signupModal');
+    const navRight = document.querySelector('.nav-right');
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
 
+    localStorage.removeItem('what2wearUser');
+    const storedUser = JSON.parse(sessionStorage.getItem('what2wearUser') || 'null');
+    let currentUser = storedUser || {
+        u_id: 1,
+        username: 'Guest',
+        role: 'guest',
+    };
     let wardrobeCount = 1;
     const MAX_WARDROBES = 3;
     let wardrobes = [];
     let clothesData = [];
     let currentClosetId = null;
+    let searchTimer = null;
 
     const wardrobeImages = [
         "/static/img/Wardrobe1.png", 
@@ -23,37 +49,75 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     const dummyClothes = [
-        { name: "White T-Shirt", type: "Top" },
-        { name: "Blue Jeans", type: "Pants" },
-        { name: "Black Skirt", type: "Skirt" },
-        { name: "Denim Jacket", type: "Outerwear" }
+        { item_name: "White T-Shirt", category: "Top", color: "White", tag: "basic" },
+        { item_name: "Blue Jeans", category: "Bottom", color: "Blue", tag: "casual" },
+        { item_name: "Black Skirt", category: "Bottom", color: "Black", tag: "work" },
+        { item_name: "Denim Jacket", category: "Outerwear", color: "Blue", tag: "casual" }
     ];
 
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function firstValue(value) {
+        return String(value || '').split(',').map((part) => part.trim()).filter(Boolean)[0] || '';
+    }
+
+    function query(params) {
+        const search = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value) search.set(key, value);
+        });
+        const text = search.toString();
+        return text ? `?${text}` : '';
+    }
+
+    async function api(path, options = {}) {
+        const response = await fetch(path, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options,
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Request failed');
+        return data;
+    }
+
     function loadWardrobes() {
-        fetch('/api/wardrobes')
+        fetch(`/api/wardrobes${query({ u_id: currentUser.u_id })}`)
             .then((res) => res.json())
             .then((data) => {
                 wardrobes = data;
                 wardrobeCount = Math.min(data.length, MAX_WARDROBES);
+                if (!currentClosetId && data.length > 0) currentClosetId = data[0].c_id;
                 renderWardrobes();
-                if (data.length > 0) {
-                    selectCloset(data[0].c_id);
-                }
+                if (currentClosetId) selectCloset(currentClosetId);
+                loadReports();
             })
             .catch(() => {
                 renderWardrobes();
             });
     }
 
+    function currentFilters() {
+        return {
+            search: searchInput?.value.trim() || '',
+            category: categoryFilter?.value || '',
+            color: colorFilter?.value || '',
+            tag: tagFilter?.value || '',
+        };
+    }
+
     function loadClosetItems(closetId) {
         currentClosetId = closetId;
-        fetch(`/api/closet/${closetId}/items`)
+        fetch(`/api/closet/${closetId}/items${query(currentFilters())}`)
             .then((res) => res.json())
             .then((data) => {
-                clothesData = data.map((item) => ({
-                    name: item.item_name,
-                    type: item.category || item.tag || 'Item',
-                }));
+                clothesData = data;
                 if (wardrobeLayout.classList.contains('opened')) {
                     renderClothes();
                 }
@@ -62,6 +126,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 clothesData = dummyClothes;
                 renderClothes();
             });
+    }
+
+    function loadOptions() {
+        fetch('/api/options')
+            .then((res) => res.json())
+            .then((options) => {
+                fillSelect(categoryFilter, options.categories || [], 'All Categories');
+                fillSelect(colorFilter, options.colors || [], 'All Colors');
+                fillSelect(tagFilter, options.tags || [], 'All Tags');
+            })
+            .catch(() => {});
+    }
+
+    function fillSelect(select, options, label) {
+        if (!select) return;
+        const current = select.value;
+        select.innerHTML = `<option value="">${label}</option>` + options.map((option) => (
+            `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`
+        )).join('');
+        select.value = current;
     }
 
     function renderWardrobes() {
@@ -78,10 +162,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="wardrobe-image-placeholder">
                     <img src="${wardrobeImages[index] || wardrobeImages[0]}" alt="Wardrobe ${index + 1}">
                 </div>
-                <h3>${wardrobe.c_name}</h3>
+                <h3>${escapeHtml(wardrobe.c_name)}</h3>
+                <div class="wardrobe-count">Click to open</div>
             `;
             wardrobeContainer.appendChild(newItem);
         });
+        if (addWardrobeBtn) addWardrobeBtn.classList.toggle('disabled', items.length >= MAX_WARDROBES);
     }
 
     function selectCloset(closetId) {
@@ -89,7 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
         loadClosetItems(closetId);
     }
 
+    loadOptions();
     loadWardrobes();
+    updateLoginUI();
 
     // ==========================================
     // 1. 衣櫃展開與返回功能
@@ -98,16 +186,15 @@ document.addEventListener('DOMContentLoaded', () => {
         wardrobeContainer.addEventListener('click', (e) => {
             const clickedItem = e.target.closest('.wardrobe-item');
             if (clickedItem && !wardrobeLayout.classList.contains('opened')) {
-                // 隱藏其他衣櫃
                 const allItems = wardrobeContainer.querySelectorAll('.wardrobe-item');
                 allItems.forEach(item => {
                     if (item !== clickedItem) item.classList.add('hidden');
                 });
                 
-                // 切換佈局與按鈕
                 wardrobeLayout.classList.add('opened');
                 if (addWardrobeBtn) addWardrobeBtn.style.display = 'none';
                 if (backBtn) backBtn.style.display = 'inline-flex';
+                if (catalogTools) catalogTools.style.display = 'grid';
                 if (wardrobeTitle) wardrobeTitle.innerText = `Inside ${clickedItem.querySelector('h3').innerText}`;
 
                 const closetId = Number(clickedItem.dataset.id) || 1;
@@ -122,14 +209,31 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wardrobeTitle) wardrobeTitle.innerText = 'My Wardrobes';
             backBtn.style.display = 'none';
             if (addWardrobeBtn && wardrobeCount < MAX_WARDROBES) addWardrobeBtn.style.display = 'block';
+            if (catalogTools) catalogTools.style.display = 'none';
             if (clothesDisplayArea) clothesDisplayArea.style.display = 'none';
             
-            // 恢復所有衣櫃顯示
             wardrobeLayout.classList.remove('opened');
             const allItems = wardrobeContainer.querySelectorAll('.wardrobe-item');
             allItems.forEach(item => item.classList.remove('hidden'));
         });
     }
+
+    [searchInput, categoryFilter, colorFilter, tagFilter].forEach((control) => {
+        control?.addEventListener(control === searchInput ? 'input' : 'change', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                if (currentClosetId) loadClosetItems(currentClosetId);
+            }, 180);
+        });
+    });
+
+    clearFiltersBtn?.addEventListener('click', () => {
+        if (searchInput) searchInput.value = '';
+        if (categoryFilter) categoryFilter.value = '';
+        if (colorFilter) colorFilter.value = '';
+        if (tagFilter) tagFilter.value = '';
+        if (currentClosetId) loadClosetItems(currentClosetId);
+    });
 
     // ==========================================
     // 2. 動態渲染衣服清單
@@ -138,87 +242,166 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!clothesDisplayArea) return;
         clothesDisplayArea.innerHTML = ''; 
         
-        const items = clothesData.length > 0 ? clothesData : dummyClothes;
+        const items = clothesData.length > 0 ? clothesData : [];
 
-        // 渲染衣服卡片
+        if (items.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-message';
+            empty.textContent = 'No matching clothing item. Add one below.';
+            clothesDisplayArea.appendChild(empty);
+        }
+
         items.forEach(cloth => {
+            const type = firstValue(cloth.category) || firstValue(cloth.tag) || 'Item';
+            const imageUrl = firstValue(cloth.image_url);
             const clothEl = document.createElement('div');
             clothEl.className = 'cloth-display-item';
+            clothEl.dataset.itemId = cloth.item_id || '';
             clothEl.innerHTML = `
-                <div class="cloth-image-placeholder">${cloth.type}</div>
-                <span>${cloth.name}</span>
+                <div class="cloth-image-placeholder">
+                    ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(cloth.item_name)}">` : escapeHtml(type)}
+                </div>
+                <span>${escapeHtml(cloth.item_name)}</span>
+                <div class="cloth-detail">
+                    ${escapeHtml(firstValue(cloth.color) || 'No color')} · ${escapeHtml(cloth.size || 'No size')}<br>
+                    Last worn: ${escapeHtml(cloth.last_worn || 'Not recorded')}
+                </div>
+                <div class="cloth-actions">
+                    <button type="button" class="edit-item-btn">Edit</button>
+                    <button type="button" class="delete-item-btn">Delete</button>
+                </div>
             `;
+            clothEl.querySelector('.edit-item-btn')?.addEventListener('click', () => openItemModal(cloth));
+            clothEl.querySelector('.delete-item-btn')?.addEventListener('click', () => deleteItem(cloth.item_id));
             clothesDisplayArea.appendChild(clothEl);
         });
 
-        // 渲染「+」新增按鈕
         const addBtnCard = document.createElement('div');
         addBtnCard.className = 'add-cloth-btn-card';
         addBtnCard.innerHTML = '<span>+</span>';
-        addBtnCard.addEventListener('click', openItemModal);
+        addBtnCard.addEventListener('click', () => openItemModal());
         clothesDisplayArea.appendChild(addBtnCard);
     }
 
     // ==========================================
-    // 3. 新增衣服 (Modal 與表單邏輯)
+    // 3. 新增 / 編輯 / 刪除衣服
     // ==========================================
-    const itemModal = document.getElementById('addItemModal');
-    const addItemForm = document.getElementById('addItemForm');
+    function openItemModal(item = null) {
+        if (!itemModal) return;
+        if (addItemForm) addItemForm.reset();
+        document.getElementById('itemId').value = item?.item_id || '';
+        document.getElementById('itemName').value = item?.item_name || '';
+        document.getElementById('itemCategory').value = firstValue(item?.category);
+        document.getElementById('itemSize').value = item?.size || '';
+        document.getElementById('itemColor').value = firstValue(item?.color);
+        document.getElementById('itemTag').value = firstValue(item?.tag);
+        document.getElementById('itemLastWorn').value = item?.last_worn || '';
+        document.getElementById('itemImageUrl').value = firstValue(item?.image_url);
+        if (itemModalTitle) itemModalTitle.innerText = item ? 'Edit Item' : 'Add New Item';
+        if (itemSubmitBtn) itemSubmitBtn.innerText = item ? 'Save Changes' : 'Add to Closet';
+        resetModalUploadUI();
+        itemModal.style.display = 'flex';
+    }
 
-    function openItemModal() { if (itemModal) itemModal.style.display = 'flex'; }
     function closeItemModal() { 
         if (itemModal) itemModal.style.display = 'none'; 
         if (addItemForm) addItemForm.reset();
         resetModalUploadUI();
     }
 
-    if (addItemForm) {
-        addItemForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const itemName = document.getElementById('itemName')?.value || 'New Item';
-            const itemCategory = document.getElementById('itemCategory')?.value || 'Misc';
-            const itemSize = document.getElementById('itemSize')?.value || '';
-            const itemColor = document.getElementById('itemColor')?.value || '';
-            const itemTag = document.getElementById('itemTag')?.value || '';
+    async function uploadSelectedPhoto() {
+        if (!modalUploadPhoto?.files?.[0]) {
+            return '';
+        }
 
+        const formData = new FormData();
+        formData.append('image', modalUploadPhoto.files[0]);
+
+        const response = await fetch('/api/uploads', {
+            method: 'POST',
+            body: formData,
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(result.error || 'Photo upload failed');
+        }
+        return result.image_url || '';
+    }
+
+    if (addItemForm) {
+        addItemForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const itemId = document.getElementById('itemId')?.value || '';
             const payload = {
-                item_name: itemName,
-                size: itemSize,
-                color: itemColor,
-                category: itemCategory,
-                tag: itemTag,
-                image_url: '',
+                item_name: document.getElementById('itemName')?.value || 'New Item',
+                size: document.getElementById('itemSize')?.value || '',
+                color: document.getElementById('itemColor')?.value || '',
+                category: document.getElementById('itemCategory')?.value || '',
+                tag: document.getElementById('itemTag')?.value || '',
+                last_worn: document.getElementById('itemLastWorn')?.value || '',
+                image_url: document.getElementById('itemImageUrl')?.value || '',
                 c_id: currentClosetId || 1,
             };
 
-            fetch('/api/items', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            try {
+                const uploadedUrl = await uploadSelectedPhoto();
+                if (uploadedUrl) {
+                    payload.image_url = uploadedUrl;
+                    const imageInput = document.getElementById('itemImageUrl');
+                    if (imageInput) imageInput.value = uploadedUrl;
+                }
+
+                const response = await fetch(itemId ? `/api/items/${itemId}` : '/api/items', {
+                    method: itemId ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || 'Item save failed');
+
+                loadOptions();
+                loadClosetItems(currentClosetId || 1);
+                loadReports();
+                closeItemModal();
+            } catch (error) {
+                alert(error.message);
+            }
+            return;
+
+            fetch(itemId ? `/api/items/${itemId}` : '/api/items', {
+                method: itemId ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             })
                 .then((response) => {
-                    if (!response.ok) throw new Error('新增衣物失敗');
+                    if (!response.ok) throw new Error('衣物儲存失敗');
                     return response.json();
                 })
                 .then(() => {
+                    loadOptions();
                     loadClosetItems(currentClosetId || 1);
+                    loadReports();
                     closeItemModal();
                 })
-                .catch(() => {
-                    dummyClothes.push({ name: itemName, type: itemCategory });
-                    renderClothes();
-                    closeItemModal();
+                .catch((error) => {
+                    alert(error.message);
                 });
         });
     }
 
-    // 照片上傳 UI 切換
-    const modalUploadPhoto = document.getElementById('modalPhotoUpload');
-    const modalUploadIcon = document.getElementById('modalUploadIcon');
-    const modalUploadText = document.getElementById('modalUploadText');
+    function deleteItem(itemId) {
+        if (!itemId || !confirm('Delete this item?')) return;
+        fetch(`/api/items/${itemId}`, { method: 'DELETE' })
+            .then((response) => {
+                if (!response.ok) throw new Error('刪除衣物失敗');
+                loadOptions();
+                loadClosetItems(currentClosetId || 1);
+                loadReports();
+            })
+            .catch((error) => alert(error.message));
+    }
 
+    // 照片上傳 UI 切換
     if (modalUploadPhoto && modalUploadIcon && modalUploadText) {
         modalUploadPhoto.addEventListener('change', (e) => {
             if (e.target.files[0]) {
@@ -243,46 +426,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     if (addWardrobeBtn && wardrobeContainer) {
         addWardrobeBtn.addEventListener('click', () => {
-            if (wardrobeCount < MAX_WARDROBES) {
-                wardrobeCount++;
-                const newItem = document.createElement('div');
-                newItem.className = 'wardrobe-item'; 
-                newItem.innerHTML = `
-                    <div class="wardrobe-image-placeholder">
-                        <img src="${wardrobeImages[wardrobeCount - 1]}" alt="Wardrobe ${wardrobeCount}">
-                    </div>
-                    <h3>Wardrobe ${wardrobeCount}</h3>
-                `;
-                wardrobeContainer.appendChild(newItem);
-                if (wardrobeCount === MAX_WARDROBES) addWardrobeBtn.classList.add('disabled');
-            }
+            if (wardrobeCount >= MAX_WARDROBES) return;
+            const name = prompt('Wardrobe name', `Wardrobe ${wardrobeCount + 1}`);
+            if (!name) return;
+            api('/api/wardrobes', {
+                method: 'POST',
+                body: JSON.stringify({ c_name: name.trim(), u_id: currentUser.u_id }),
+            })
+                .then((result) => {
+                    currentClosetId = result.closet.c_id;
+                    loadWardrobes();
+                })
+                .catch((error) => alert(error.message));
         });
     }
 
     // ==========================================
     // 5. 會員登入 / 註冊系統
     // ==========================================
-    const loginModal = document.getElementById('loginModal');
-    const signupModal = document.getElementById('signupModal');
-    const navRight = document.querySelector('.nav-right');
-    const loginForm = document.getElementById('loginForm');
-    const signupForm = document.getElementById('signupForm');
-
-    // 統一處理所有的點擊事件 (打開視窗、關閉視窗、切換視窗)
     document.addEventListener('click', (e) => {
-        // 打開登入
         if (e.target.closest('.login') && loginModal) loginModal.style.display = 'flex';
         
-        // 關閉 Modal (點擊 X 或視窗外)
         if (e.target.closest('.close-modal') || e.target === loginModal || e.target === itemModal) {
             if (loginModal) loginModal.style.display = 'none';
-            if (itemModal) closeItemModal(); // 共用剛寫好的關閉函數
+            if (itemModal) closeItemModal();
         }
         if (e.target.closest('.close-signup-modal') || e.target === signupModal) {
             if (signupModal) signupModal.style.display = 'none';
         }
 
-        // 登入/註冊互相切換
         if (e.target.closest('#toSignupLink')) {
             e.preventDefault();
             if (loginModal) loginModal.style.display = 'none';
@@ -295,37 +467,65 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 註冊表單送出
     if (signupForm) {
         signupForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const signupName = document.getElementById('signupName')?.value || '';
-            alert('Account created successfully! Please log in.');
-            signupModal.style.display = 'none';
-            loginModal.style.display = 'flex';
-            const loginAccInput = document.getElementById('loginAccount');
-            if (loginAccInput) loginAccInput.value = signupName; 
+            const username = document.getElementById('signupEmail')?.value || document.getElementById('signupName')?.value || '';
+            api('/api/auth/signup', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username,
+                    password: document.getElementById('signupPassword')?.value || '',
+                    gender: '',
+                    role: 'user',
+                }),
+            })
+                .then((result) => {
+                    currentUser = result.user;
+                    sessionStorage.setItem('what2wearUser', JSON.stringify(currentUser));
+                    handleLoginState(currentUser.username);
+                    if (signupModal) signupModal.style.display = 'none';
+                    currentClosetId = null;
+                    loadWardrobes();
+                })
+                .catch((error) => alert(error.message));
         });
     }
 
-    // 登入表單送出
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const accountValue = document.getElementById('loginAccount')?.value || 'User';
-            handleLoginState(accountValue);
-            loginModal.style.display = 'none';
-            loginForm.reset();
+            api('/api/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: document.getElementById('loginAccount')?.value || '',
+                    password: document.getElementById('loginPassword')?.value || '',
+                }),
+            })
+                .then((result) => {
+                    currentUser = result.user;
+                    sessionStorage.setItem('what2wearUser', JSON.stringify(currentUser));
+                    handleLoginState(currentUser.username);
+                    if (loginModal) loginModal.style.display = 'none';
+                    currentClosetId = null;
+                    loadWardrobes();
+                    loadReports();
+                })
+                .catch((error) => alert(error.message));
         });
     }
 
-    // 登入狀態切換
+    function updateLoginUI() {
+        if (storedUser?.username) handleLoginState(storedUser.username);
+    }
+
     function handleLoginState(username) {
         if (!navRight) return;
         navRight.innerHTML = `
+            <a href="/record" class="nav-record-link">Record</a>
             <div class="user-profile">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <span>${username}</span>
+                <span>${escapeHtml(username)}</span>
             </div>
             <a href="#" class="logout-btn" id="logoutBtn">Log Out</a>
         `;
@@ -335,15 +535,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 登出狀態切換
     function handleLogoutState() {
+        currentUser = { u_id: 1, username: 'Guest', role: 'guest' };
+        localStorage.removeItem('what2wearUser');
+        sessionStorage.removeItem('what2wearUser');
         if (!navRight) return;
         navRight.innerHTML = `
+            <a href="/record" class="nav-record-link">Record</a>
             <span class="login">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 Log In
             </span>
         `;
-        alert('Logged out successfully.');
+        currentClosetId = null;
+        loadWardrobes();
+        loadReports();
+    }
+
+    // ==========================================
+    // 6. 報表資料
+    // ==========================================
+    function loadReports() {
+        fetch(`/api/reports${query({ u_id: currentUser.u_id })}`)
+            .then((res) => res.json())
+            .then((report) => {
+                document.getElementById('statClosets').innerText = report.totals?.closet_count || 0;
+                document.getElementById('statItems').innerText = report.totals?.item_count || 0;
+                document.getElementById('statOutfits').innerText = report.totals?.outfit_count || 0;
+                document.getElementById('statRecords').innerText = report.totals?.record_count || 0;
+                renderReportList('categoryReport', report.category_counts || [], 'category', 'item_count', 'items');
+                renderReportList('mostWornReport', report.most_worn || [], 'item_name', 'wear_count', 'wears');
+                renderReportList('leastWornReport', report.least_worn || [], 'item_name', 'wear_count', 'wears');
+            })
+            .catch(() => {});
+    }
+
+    function renderReportList(id, rows, labelKey, valueKey, suffix) {
+        const target = document.getElementById(id);
+        if (!target) return;
+        if (!rows.length) {
+            target.innerHTML = '<div class="report-row"><span>No data</span><span>-</span></div>';
+            return;
+        }
+        target.innerHTML = rows.map((row) => `
+            <div class="report-row">
+                <strong>${escapeHtml(row[labelKey] || 'Untitled')}</strong>
+                <span>${escapeHtml(row[valueKey] ?? 0)} ${suffix}</span>
+            </div>
+        `).join('');
     }
 });

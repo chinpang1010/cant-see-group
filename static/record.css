@@ -25,6 +25,13 @@ body {
     flex-direction: column;
 }
 
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
 /* --- Navbar --- */
 .navbar {
     display: flex;
@@ -177,6 +184,23 @@ textarea {
     background-color: #f7f6f0; 
 }
 
+.record-filter-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 140px;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.record-filter-row input,
+.record-filter-row select {
+    padding: 0.7rem;
+    border: 1px solid var(--grey);
+    border-radius: 8px;
+    background-color: #fff;
+    color: var(--text-dark);
+    outline: none;
+}
+
 .clothes-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -185,18 +209,23 @@ textarea {
 
 .cloth-card {
     background-color: var(--grey);
-    height: 150px;
+    min-height: 150px;
     border-radius: 10px;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 0.45rem;
     color: #666;
     font-weight: 700;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+    padding: 0.8rem;
 }
 
-.cloth-card:hover {
+.cloth-card:hover,
+.cloth-card.selected {
     transform: translateY(-3px);
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     background-color: var(--olive-green);
@@ -207,6 +236,24 @@ textarea {
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+.cloth-card-title {
+    line-height: 1.25;
+}
+
+.cloth-card-meta,
+.cloth-card-sub {
+    font-size: 0.78rem;
+    font-weight: 400;
+    opacity: 0.85;
+}
+
+.no-items {
+    grid-column: 1 / -1;
+    color: #8c8a6a;
+    text-align: center;
+    padding: 2rem;
 }
 
 /* --- Right Panel: Canvas & Upload --- */
@@ -241,6 +288,13 @@ textarea {
 
 .canvas-area p {
     margin: auto;
+}
+
+.canvas-area .cloth-card {
+    width: 100px;
+    min-height: 120px;
+    height: 120px;
+    font-size: 0.82rem;
 }
 
 .upload-section-minimal {
@@ -305,6 +359,33 @@ textarea {
     color: #fff;
 }
 
+.record-history {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--grey);
+    padding-top: 1rem;
+}
+
+.record-history h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    margin-bottom: 0.75rem;
+}
+
+.history-row {
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--grey);
+    font-size: 0.9rem;
+}
+
+.history-row strong {
+    display: block;
+    color: var(--text-dark);
+}
+
+.history-row span {
+    color: #7b7a62;
+}
+
 /* --- 上傳成功動畫 --- */
 .success-icon {
     color: #88B04B; 
@@ -319,4 +400,27 @@ textarea {
 @keyframes popIn {
     0% { transform: scale(0); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 1000px) {
+    body {
+        height: auto;
+    }
+
+    .record-container {
+        grid-template-columns: 1fr;
+        overflow: visible;
+    }
+
+    .panel {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .form-group-row,
+    .record-filter-row {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
 }
