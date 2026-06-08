@@ -15,7 +15,6 @@
             <a href="/" class="logo-link">What2Wear</a>
         </div>
         <div class="nav-right">
-            {% if session.get('role') %}
             <a href="/record" class="nav-record-link">Record</a>
             {% if session.get('role') in ['admin', 'manager'] %}
             <a href="/admin" class="nav-record-link">Admin</a>
