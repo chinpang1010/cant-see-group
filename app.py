@@ -2,7 +2,7 @@ from pathlib import Path
 from sqlite3 import IntegrityError
 from uuid import uuid4
 
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.utils import secure_filename
 
 from api.sql import Closet, ClothItem, DB, Member, Outfit, Record, Reports, init_db
@@ -14,6 +14,7 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
 UPLOAD_DIR = Path(app.root_path) / "static" / "uploads"
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+ADMIN_ROLES = {"admin", "manager"}
 
 init_db()
 
@@ -62,6 +63,10 @@ def _allowed_image(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
 
+def _is_admin_user():
+    return session.get("role") in ADMIN_ROLES
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -84,6 +89,10 @@ def record_alias():
 
 @app.route("/admin")
 def admin():
+    if not session.get("u_id"):
+        return redirect(url_for("index"))
+    if not _is_admin_user():
+        abort(403)
     users = [dict(row) for row in Member.get_all_users()]
     return render_template("admin.html", users=users)
 
@@ -120,7 +129,7 @@ def api_signup():
                 "username": username,
                 "password": password,
                 "gender": _scalar(data, "gender", ""),
-                "role": _scalar(data, "role", "user") or "user",
+                "role": "user",
                 "closet_name": f"{username}'s Closet",
             }
         )
@@ -129,7 +138,7 @@ def api_signup():
         return _error("Username already exists.", 409)
     session["u_id"] = user_id
     session["username"] = username
-    session["role"] = _scalar(data, "role", "user") or "user"
+    session["role"] = "user"
     return jsonify(
         {
             "success": True,

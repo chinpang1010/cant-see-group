@@ -77,6 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return text ? `?${text}` : '';
     }
 
+    function canOpenAdmin(user) {
+        return ['admin', 'manager'].includes(user?.role);
+    }
+
     async function api(path, options = {}) {
         const response = await fetch(path, {
             headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
@@ -528,9 +532,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleLoginState(username) {
         if (!navRight) return;
+        const adminLink = canOpenAdmin(currentUser) ? '<a href="/admin" class="nav-record-link">Admin</a>' : '';
         navRight.innerHTML = `
             <a href="/record" class="nav-record-link">Record</a>
-            <a href="/admin" class="nav-record-link">Admin</a>
+            ${adminLink}
             <div class="user-profile">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 <span>${escapeHtml(username)}</span>
@@ -555,7 +560,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!navRight) return;
         navRight.innerHTML = `
             <a href="/record" class="nav-record-link">Record</a>
-            <a href="/admin" class="nav-record-link">Admin</a>
             <span class="login">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 Log In
