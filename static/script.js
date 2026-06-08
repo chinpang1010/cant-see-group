@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginModal = document.getElementById('loginModal');
     const signupModal = document.getElementById('signupModal');
     const navRight = document.querySelector('.nav-right');
+    const heroRecordBtn = document.getElementById('heroRecordBtn');
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
 
@@ -75,6 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const text = search.toString();
         return text ? `?${text}` : '';
+    }
+
+    function canOpenAdmin(user) {
+        return ['admin', 'manager'].includes(user?.role);
     }
 
     async function api(path, options = {}) {
@@ -445,7 +450,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. 會員登入 / 註冊系統
     // ==========================================
     document.addEventListener('click', (e) => {
-        if (e.target.closest('.login') && loginModal) loginModal.style.display = 'flex';
+        if (e.target.closest('#logoutBtn')) {
+            e.preventDefault();
+            api('/api/auth/logout', { method: 'POST' }).then(() => {
+                handleLogoutState();
+                window.location.reload();
+            });
+            return;
+        }
+
+        if ((e.target.closest('.login') || e.target.closest('#heroRecordBtn')) && loginModal) {
+            e.preventDefault();
+            loginModal.style.display = 'flex';
+        }
         
         if (e.target.closest('.close-modal') || e.target === loginModal || e.target === itemModal) {
             if (loginModal) loginModal.style.display = 'none';
@@ -516,8 +533,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateLoginUI() {
-        if (storedUser?.username) {
-            // Show wardrobe and reports sections if user is already logged in
+        if (storedUser?.username && navRight) {
+            handleLoginState(storedUser.username);
             const wardrobeSection = document.getElementById('wardrobeSection');
             const reportsSection = document.getElementById('reportsSection');
             if (wardrobeSection) wardrobeSection.style.display = 'block';
@@ -528,8 +545,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleLoginState(username) {
         if (!navRight) return;
+        const adminLink = canOpenAdmin(currentUser) ? '<a href="/admin" class="nav-record-link">Admin</a>' : '';
         navRight.innerHTML = `
             <a href="/record" class="nav-record-link">Record</a>
+            ${adminLink}
             <div class="user-profile">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 <span>${escapeHtml(username)}</span>
@@ -541,10 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reportsSection = document.getElementById('reportsSection');
         if (wardrobeSection) wardrobeSection.style.display = 'block';
         if (reportsSection) reportsSection.style.display = 'block';
-        document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            handleLogoutState();
-        });
+        if (heroRecordBtn) heroRecordBtn.style.display = 'none';
     }
 
     function handleLogoutState() {
@@ -553,7 +569,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.removeItem('what2wearUser');
         if (!navRight) return;
         navRight.innerHTML = `
-            <a href="/record" class="nav-record-link">Record</a>
             <span class="login">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 Log In
@@ -564,6 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reportsSection = document.getElementById('reportsSection');
         if (wardrobeSection) wardrobeSection.style.display = 'none';
         if (reportsSection) reportsSection.style.display = 'none';
+        if (heroRecordBtn) heroRecordBtn.style.display = 'inline-block';
         currentClosetId = null;
         loadWardrobes();
         loadReports();

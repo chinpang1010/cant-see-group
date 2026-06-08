@@ -35,9 +35,11 @@ cant-see-group/
 |   |-- sql.py
 |   `-- link.py
 |-- templates/
+|   |-- admin.html
 |   |-- index.html
 |   `-- record.html
 `-- static/
+    |-- admin.css
     |-- style.css
     |-- script.js
     |-- record.css

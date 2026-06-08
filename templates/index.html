@@ -14,12 +14,23 @@
         <div class="nav-logo">
             <a href="/" class="logo-link">What2Wear</a>
         </div>
-        <div class="nav-right">
+        <div class="nav-right" id="navRight">
+            {% if session.get('u_id') %}
             <a href="/record" class="nav-record-link">Record</a>
+            {% if session.get('role') in ['admin', 'manager'] %}
+            <a href="/admin" class="nav-record-link">Admin</a>
+            {% endif %}
+            <div class="user-profile">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span>{{ session.get('username') }}</span>
+            </div>
+            <a href="#" class="logout-btn" id="logoutBtn">Log Out</a>
+            {% else %}
             <span class="login">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 Log In
             </span>
+            {% endif %}
         </div>
     </header>
 
@@ -29,7 +40,7 @@
         <div class="hero-content">
             <h1 class="hero-title">What2Wear</h1>
             <p class="hero-subtitle">Sustainable Essentials for Your Closet</p>
-            <a href="record.html" target="_blank" class="record-btn">Try It!</a>
+            <a href="#" class="record-btn" id="heroRecordBtn" {% if session.get('u_id') %}style="display: none;"{% endif %}>Try It!</a>
         </div>
     </main>
         
