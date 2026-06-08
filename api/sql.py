@@ -167,6 +167,25 @@ class Member:
         return DB.fetchall("SELECT username FROM USER ORDER BY username")
 
     @staticmethod
+    def get_all_users():
+        return DB.fetchall(
+            """
+            SELECT
+                U.u_id,
+                U.username,
+                COALESCE(U.gender, '') AS gender,
+                U.role,
+                COUNT(DISTINCT C.c_id) AS closet_count,
+                COUNT(DISTINCT I.item_id) AS item_count
+            FROM USER U
+            LEFT JOIN CLOSET C ON U.u_id = C.u_id
+            LEFT JOIN CLOTH_ITEM I ON C.c_id = I.c_id
+            GROUP BY U.u_id
+            ORDER BY U.u_id
+            """
+        )
+
+    @staticmethod
     def create_member(data):
         DB.execute(
             """

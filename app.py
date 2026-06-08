@@ -82,6 +82,17 @@ def record_alias():
     return redirect(url_for("record"))
 
 
+@app.route("/admin")
+def admin():
+    users = [dict(row) for row in Member.get_all_users()]
+    return render_template("admin.html", users=users)
+
+
+@app.route("/admin.html")
+def admin_alias():
+    return redirect(url_for("admin"))
+
+
 @app.route("/api/auth/login", methods=["POST"])
 def api_login():
     data = _payload()
