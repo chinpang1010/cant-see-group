@@ -15,7 +15,9 @@
             <a href="/" class="logo-link">What2Wear</a>
         </div>
         <div class="nav-right">
+            {% if session.get('u_id') %}
             <a href="/record" class="nav-link">Record</a>
+            {% endif %}
             <a href="/admin" class="nav-link active">Admin</a>
         </div>
     </header>

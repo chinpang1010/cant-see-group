@@ -79,6 +79,8 @@ def index_alias():
 
 @app.route("/record")
 def record():
+    if not session.get("u_id"):
+        return redirect(url_for("index"))
     return render_template("record.html")
 
 
