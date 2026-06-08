@@ -516,7 +516,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateLoginUI() {
-        if (storedUser?.username) handleLoginState(storedUser.username);
+        if (storedUser?.username) {
+            // Show wardrobe and reports sections if user is already logged in
+            const wardrobeSection = document.getElementById('wardrobeSection');
+            const reportsSection = document.getElementById('reportsSection');
+            if (wardrobeSection) wardrobeSection.style.display = 'block';
+            if (reportsSection) reportsSection.style.display = 'block';
+            handleLoginState(storedUser.username);
+        }
     }
 
     function handleLoginState(username) {
@@ -529,6 +536,11 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <a href="#" class="logout-btn" id="logoutBtn">Log Out</a>
         `;
+        // Show wardrobe and reports sections after login
+        const wardrobeSection = document.getElementById('wardrobeSection');
+        const reportsSection = document.getElementById('reportsSection');
+        if (wardrobeSection) wardrobeSection.style.display = 'block';
+        if (reportsSection) reportsSection.style.display = 'block';
         document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
             e.preventDefault();
             handleLogoutState();
@@ -547,6 +559,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 Log In
             </span>
         `;
+        // Hide wardrobe and reports sections after logout
+        const wardrobeSection = document.getElementById('wardrobeSection');
+        const reportsSection = document.getElementById('reportsSection');
+        if (wardrobeSection) wardrobeSection.style.display = 'none';
+        if (reportsSection) reportsSection.style.display = 'none';
         currentClosetId = null;
         loadWardrobes();
         loadReports();
