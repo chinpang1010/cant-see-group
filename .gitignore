@@ -9,3 +9,6 @@ env/
 .env
 instance/
 static/uploads/*
+
+# virtual environment
+myenv/
