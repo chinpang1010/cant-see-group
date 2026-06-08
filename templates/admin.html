@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What2Wear | Admin</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-logo">
+            <a href="/" class="logo-link">What2Wear</a>
+        </div>
+        <div class="nav-right">
+            <a href="/record" class="nav-link">Record</a>
+            <a href="/admin" class="nav-link active">Admin</a>
+        </div>
+    </header>
+
+    <main class="admin-container">
+        <section class="admin-panel">
+            <div class="admin-heading">
+                <div>
+                    <h1>User List</h1>
+                    <p>{{ users|length }} registered users</p>
+                </div>
+            </div>
+
+            <div class="user-table-wrap">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Gender</th>
+                            <th>Role</th>
+                            <th>Closets</th>
+                            <th>Items</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.u_id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.gender or 'Not set' }}</td>
+                            <td><span class="role-badge">{{ user.role }}</span></td>
+                            <td>{{ user.closet_count }}</td>
+                            <td>{{ user.item_count }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="empty-row">No users found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

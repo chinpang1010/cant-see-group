@@ -60,13 +60,15 @@ textarea {
     letter-spacing: 2px;
 }
 
-.logo-link {
+.logo-link,
+.nav-link {
     text-decoration: none; 
     color: inherit;        
     transition: opacity 0.3s;
 }
 
-.logo-link:hover {
+.logo-link:hover,
+.nav-link:hover {
     opacity: 0.7; 
 }
 
