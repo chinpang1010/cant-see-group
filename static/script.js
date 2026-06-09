@@ -493,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     username,
                     password: document.getElementById('signupPassword')?.value || '',
-                    gender: '',
+                    gender: document.getElementById('signupGender')?.value || '',
                     role: 'user',
                 }),
             })
