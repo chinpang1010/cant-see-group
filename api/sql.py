@@ -265,12 +265,25 @@ class Closet:
         DB.execute("DELETE FROM CLOSET WHERE c_id = ?", (closet_id,))
         DB.commit()
 
+    @staticmethod
+    def outfit_reference_count(closet_id):
+        return DB.fetchone(
+            """
+            SELECT COUNT(DISTINCT N.outfit_id)
+            FROM CLOTH_ITEM I
+            JOIN INCLUDES N ON I.item_id = N.item_id
+            WHERE I.c_id = ?
+            """,
+            (closet_id,),
+        )[0]
+
 
 class ClothItem:
     BASE_SELECT = """
         SELECT
             I.item_id,
             I.c_id,
+            C.u_id,
             I.item_name,
             I.size,
             I.last_worn,
@@ -296,6 +309,10 @@ class ClothItem:
         if filters.get("closet_id"):
             clauses.append("I.c_id = ?")
             params.append(filters["closet_id"])
+
+        if filters.get("user_id"):
+            clauses.append("C.u_id = ?")
+            params.append(filters["user_id"])
 
         if filters.get("q"):
             like = f"%{filters['q'].lower()}%"
@@ -422,16 +439,98 @@ class ClothItem:
     def touch_worn(item_ids, worn_date):
         for item_id in _as_list(item_ids):
             DB.execute(
-                "UPDATE CLOTH_ITEM SET last_worn = ? WHERE item_id = ?",
-                (worn_date, item_id),
+                """
+                UPDATE CLOTH_ITEM
+                SET last_worn = CASE
+                    WHEN last_worn IS NULL OR last_worn = '' OR last_worn < ?
+                    THEN ?
+                    ELSE last_worn
+                END
+                WHERE item_id = ?
+                """,
+                (worn_date, worn_date, item_id),
             )
 
     @staticmethod
-    def options():
+    def owned_ids(user_id, item_ids):
+        normalized_ids = []
+        for value in _as_list(item_ids):
+            try:
+                normalized_ids.append(int(value))
+            except (TypeError, ValueError):
+                continue
+        if not normalized_ids:
+            return []
+
+        placeholders = ",".join("?" for _ in normalized_ids)
+        rows = DB.fetchall(
+            f"""
+            SELECT I.item_id
+            FROM CLOTH_ITEM I
+            JOIN CLOSET C ON I.c_id = C.c_id
+            WHERE C.u_id = ? AND I.item_id IN ({placeholders})
+            """,
+            (user_id, *normalized_ids),
+        )
+        return [row["item_id"] for row in rows]
+
+    @staticmethod
+    def outfit_reference_count(item_id, user_id):
+        return DB.fetchone(
+            """
+            SELECT COUNT(DISTINCT N.outfit_id)
+            FROM INCLUDES N
+            JOIN OUTFIT O ON N.outfit_id = O.outfit_id
+            WHERE N.item_id = ? AND O.u_id = ?
+            """,
+            (item_id, user_id),
+        )[0]
+
+    @staticmethod
+    def options(user_id):
         return {
-            "categories": [row[0] for row in DB.fetchall("SELECT DISTINCT category FROM CLOTH_CATEGORY WHERE category <> '' ORDER BY category")],
-            "colors": [row[0] for row in DB.fetchall("SELECT DISTINCT color FROM CLOTH_COLOR WHERE color <> '' ORDER BY color")],
-            "tags": [row[0] for row in DB.fetchall("SELECT DISTINCT tag FROM CLOTH_TAG WHERE tag <> '' ORDER BY tag")],
+            "categories": [
+                row[0]
+                for row in DB.fetchall(
+                    """
+                    SELECT DISTINCT K.category
+                    FROM CLOTH_CATEGORY K
+                    JOIN CLOTH_ITEM I ON K.item_id = I.item_id
+                    JOIN CLOSET C ON I.c_id = C.c_id
+                    WHERE C.u_id = ? AND K.category <> ''
+                    ORDER BY K.category
+                    """,
+                    (user_id,),
+                )
+            ],
+            "colors": [
+                row[0]
+                for row in DB.fetchall(
+                    """
+                    SELECT DISTINCT L.color
+                    FROM CLOTH_COLOR L
+                    JOIN CLOTH_ITEM I ON L.item_id = I.item_id
+                    JOIN CLOSET C ON I.c_id = C.c_id
+                    WHERE C.u_id = ? AND L.color <> ''
+                    ORDER BY L.color
+                    """,
+                    (user_id,),
+                )
+            ],
+            "tags": [
+                row[0]
+                for row in DB.fetchall(
+                    """
+                    SELECT DISTINCT T.tag
+                    FROM CLOTH_TAG T
+                    JOIN CLOTH_ITEM I ON T.item_id = I.item_id
+                    JOIN CLOSET C ON I.c_id = C.c_id
+                    WHERE C.u_id = ? AND T.tag <> ''
+                    ORDER BY T.tag
+                    """,
+                    (user_id,),
+                )
+            ],
         }
 
 
@@ -485,12 +584,22 @@ class Outfit:
                 GROUP_CONCAT(DISTINCT S.season) AS season,
                 GROUP_CONCAT(DISTINCT A.occasion) AS occasion,
                 GROUP_CONCAT(DISTINCT G.image_url) AS image_url,
-                COUNT(DISTINCT I.item_id) AS item_count
+                GROUP_CONCAT(DISTINCT I.item_name) AS item_names,
+                COALESCE(
+                    MIN(NULLIF(G.image_url, '')),
+                    MIN(NULLIF(CI.image_url, ''))
+                ) AS preview_image,
+                COUNT(DISTINCT I.item_id) AS item_count,
+                COUNT(DISTINCT R.datetime) AS worn_count,
+                MAX(R.datetime) AS last_worn
             FROM OUTFIT O
             LEFT JOIN OUTFIT_SEASON S ON O.outfit_id = S.outfit_id
             LEFT JOIN OUTFIT_OCCASION A ON O.outfit_id = A.outfit_id
             LEFT JOIN OUTFIT_IMG G ON O.outfit_id = G.outfit_id
-            LEFT JOIN INCLUDES I ON O.outfit_id = I.outfit_id
+            LEFT JOIN INCLUDES N ON O.outfit_id = N.outfit_id
+            LEFT JOIN CLOTH_ITEM I ON N.item_id = I.item_id
+            LEFT JOIN CLOTH_IMG CI ON I.item_id = CI.item_id
+            LEFT JOIN RECORD R ON O.outfit_id = R.outfit_id
         """
         params = []
         if user_id:
@@ -500,14 +609,89 @@ class Outfit:
         return DB.fetchall(sql, tuple(params))
 
     @staticmethod
+    def get(outfit_id, user_id=None):
+        sql = """
+            SELECT
+                O.outfit_id,
+                O.u_id,
+                O.outfit_name,
+                O.note,
+                O.created_date,
+                GROUP_CONCAT(DISTINCT S.season) AS season,
+                GROUP_CONCAT(DISTINCT A.occasion) AS occasion,
+                GROUP_CONCAT(DISTINCT G.image_url) AS image_url,
+                COUNT(DISTINCT N.item_id) AS item_count,
+                COUNT(DISTINCT R.datetime) AS worn_count,
+                MAX(R.datetime) AS last_worn
+            FROM OUTFIT O
+            LEFT JOIN OUTFIT_SEASON S ON O.outfit_id = S.outfit_id
+            LEFT JOIN OUTFIT_OCCASION A ON O.outfit_id = A.outfit_id
+            LEFT JOIN OUTFIT_IMG G ON O.outfit_id = G.outfit_id
+            LEFT JOIN INCLUDES N ON O.outfit_id = N.outfit_id
+            LEFT JOIN RECORD R ON O.outfit_id = R.outfit_id
+            WHERE O.outfit_id = ?
+        """
+        params = [outfit_id]
+        if user_id is not None:
+            sql += " AND O.u_id = ?"
+            params.append(user_id)
+        sql += " GROUP BY O.outfit_id"
+        return DB.fetchone(sql, tuple(params))
+
+    @staticmethod
+    def get_items(outfit_id):
+        sql = (
+            ClothItem.BASE_SELECT
+            + """
+            JOIN INCLUDES N ON I.item_id = N.item_id
+            WHERE N.outfit_id = ?
+            GROUP BY I.item_id
+            ORDER BY I.item_name
+            """
+        )
+        return DB.fetchall(sql, (outfit_id,))
+
+    @staticmethod
     def get_item_ids(outfit_id):
         rows = DB.fetchall("SELECT item_id FROM INCLUDES WHERE outfit_id = ?", (outfit_id,))
         return [row["item_id"] for row in rows]
 
     @staticmethod
-    def delete(outfit_id):
-        DB.execute("DELETE FROM OUTFIT WHERE outfit_id = ?", (outfit_id,))
+    def update(outfit_id, user_id, data, item_ids):
+        current = Outfit.get(outfit_id, user_id)
+        if not current:
+            return False
+
+        DB.execute(
+            """
+            UPDATE OUTFIT
+            SET outfit_name = ?, note = ?
+            WHERE outfit_id = ? AND u_id = ?
+            """,
+            (
+                data.get("outfit_name", current["outfit_name"]),
+                data.get("note", current["note"] or ""),
+                outfit_id,
+                user_id,
+            ),
+        )
+        Outfit._replace_values("OUTFIT_IMG", "image_url", outfit_id, data.get("image_url", ""))
+        Outfit._replace_values("OUTFIT_SEASON", "season", outfit_id, data.get("season", ""))
+        Outfit._replace_values("OUTFIT_OCCASION", "occasion", outfit_id, data.get("occasion", ""))
+        Outfit._replace_values("INCLUDES", "item_id", outfit_id, item_ids)
         DB.commit()
+        return True
+
+    @staticmethod
+    def delete(outfit_id, user_id=None):
+        sql = "DELETE FROM OUTFIT WHERE outfit_id = ?"
+        params = [outfit_id]
+        if user_id is not None:
+            sql += " AND u_id = ?"
+            params.append(user_id)
+        cursor = DB.execute(sql, tuple(params))
+        DB.commit()
+        return cursor.rowcount > 0
 
 
 class Record:
@@ -519,9 +703,9 @@ class Record:
         if not outfit_id:
             outfit_id = Outfit.add(
                 {
-                    "u_id": data.get("u_id", 1),
+                    "u_id": data.get("owner_id", 1),
                     "outfit_name": data.get("outfit_name", "Outfit Record"),
-                    "note": data.get("note", ""),
+                    "note": data.get("outfit_note", ""),
                     "season": data.get("season", ""),
                     "occasion": data.get("occasion", ""),
                     "image_url": data.get("image_url", ""),
@@ -536,7 +720,7 @@ class Record:
         record_datetime = data.get("datetime") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         DB.execute(
             """
-            INSERT OR REPLACE INTO RECORD
+            INSERT INTO RECORD
                 (outfit_id, datetime, rating, weather, note, mood)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
@@ -583,7 +767,7 @@ class Record:
     @staticmethod
     def update(outfit_id, datetime_str, data):
         """Update an existing record"""
-        DB.execute(
+        cursor = DB.execute(
             """
             UPDATE RECORD
             SET rating = ?, weather = ?, note = ?, mood = ?
@@ -598,45 +782,32 @@ class Record:
                 datetime_str,
             ),
         )
-        
-        # Update outfit metadata if provided
-        if data.get("outfit_name") or data.get("season") or data.get("occasion"):
-            DB.execute(
-                "UPDATE OUTFIT SET outfit_name = ?, note = ? WHERE outfit_id = ?",
-                (
-                    data.get("outfit_name", ""),
-                    data.get("outfit_note", ""),
-                    outfit_id,
-                ),
-            )
-            
-            # Update season and occasion tables
-            if data.get("season"):
-                DB.execute("DELETE FROM OUTFIT_SEASON WHERE outfit_id = ?", (outfit_id,))
-                DB.execute(
-                    "INSERT INTO OUTFIT_SEASON (outfit_id, season) VALUES (?, ?)",
-                    (outfit_id, data.get("season")),
-                )
-            
-            if data.get("occasion"):
-                DB.execute("DELETE FROM OUTFIT_OCCASION WHERE outfit_id = ?", (outfit_id,))
-                DB.execute(
-                    "INSERT INTO OUTFIT_OCCASION (outfit_id, occasion) VALUES (?, ?)",
-                    (outfit_id, data.get("occasion")),
-                )
-        
         DB.commit()
-        return True
+        return cursor.rowcount > 0
 
     @staticmethod
-    def delete(outfit_id, datetime_str):
-        """Delete a record"""
-        DB.execute(
-            "DELETE FROM RECORD WHERE outfit_id = ? AND datetime = ?",
-            (outfit_id, datetime_str),
+    def delete(outfit_id, datetime_str, user_id=None):
+        """Delete one wear record without deleting the reusable outfit."""
+        owner_clause = ""
+        params = [outfit_id, datetime_str]
+        if user_id is not None:
+            owner_clause = """
+                AND EXISTS (
+                    SELECT 1 FROM OUTFIT O
+                    WHERE O.outfit_id = RECORD.outfit_id AND O.u_id = ?
+                )
+            """
+            params.append(user_id)
+        cursor = DB.execute(
+            f"""
+            DELETE FROM RECORD
+            WHERE outfit_id = ? AND datetime = ?
+            {owner_clause}
+            """,
+            tuple(params),
         )
         DB.commit()
-        return True
+        return {"record_deleted": cursor.rowcount > 0, "outfit_deleted": False}
 
 
 class Reports:

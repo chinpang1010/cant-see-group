@@ -16,6 +16,7 @@
         </div>
         <div class="nav-right" id="navRight">
             {% if session.get('u_id') %}
+            <a href="/outfits" class="nav-record-link">Outfits</a>
             <a href="/record" class="nav-record-link">Record</a>
             {% if session.get('role') in ['admin', 'manager'] %}
             <a href="/admin" class="nav-record-link">Admin</a>

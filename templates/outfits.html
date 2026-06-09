@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What2Wear | My Outfits</title>
+    <link rel="stylesheet" href="/static/outfits.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body
+    data-user-id="{{ session.get('u_id') }}"
+    data-user-name="{{ session.get('username', '') }}"
+>
+    <header class="navbar">
+        <div class="nav-logo">
+            <a href="/" class="logo-link">What2Wear</a>
+        </div>
+        <nav class="nav-right">
+            <a href="/" class="nav-link">Wardrobes</a>
+            <a href="/outfits" class="nav-link active">Outfits</a>
+            <a href="/record" class="nav-link">Record</a>
+            {% if session.get('role') in ['admin', 'manager'] %}
+            <a href="/admin" class="nav-link">Admin</a>
+            {% endif %}
+            <span class="login">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                {{ session.get('username') }}
+            </span>
+            <a href="#" class="logout-btn" id="logoutBtn">Log Out</a>
+        </nav>
+    </header>
+
+    <main class="outfits-container">
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">Reusable combinations</p>
+                <h1>My Outfits</h1>
+                <p>Build an outfit once, then record each time you wear it.</p>
+            </div>
+            <button type="button" class="primary-btn" id="createOutfitBtn">Create Outfit</button>
+        </section>
+
+        <section class="outfit-tools" aria-label="Outfit filters">
+            <input type="search" id="outfitSearch" placeholder="Search outfit or clothing name...">
+            <select id="seasonFilter">
+                <option value="">All Seasons</option>
+                {% for season in seasons %}
+                <option value="{{ season }}">{{ season }}</option>
+                {% endfor %}
+            </select>
+            <select id="occasionFilter">
+                <option value="">All Occasions</option>
+            </select>
+            <button type="button" class="secondary-btn" id="clearOutfitFilters">Clear</button>
+        </section>
+
+        <section class="outfit-grid" id="outfitGrid">
+            <div class="empty-state">Loading outfits...</div>
+        </section>
+    </main>
+
+    <div class="modal" id="outfitModal" aria-hidden="true">
+        <div class="modal-content">
+            <button type="button" class="close-modal" id="closeOutfitModal" aria-label="Close">&times;</button>
+            <h2 id="outfitModalTitle">Create Outfit</h2>
+
+            <form id="outfitForm">
+                <input type="hidden" id="outfitId">
+
+                <div class="form-group">
+                    <label for="outfitName">Outfit Name</label>
+                    <input type="text" id="outfitName" maxlength="120" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="outfitSeason">Season</label>
+                        <select id="outfitSeason">
+                            <option value="">Not specified</option>
+                            {% for season in seasons %}
+                            <option value="{{ season }}">{{ season }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="outfitOccasion">Occasion</label>
+                        <select id="outfitOccasion">
+                            <option value="">Not specified</option>
+                            <option value="Casual">Casual</option>
+                            <option value="Work">Work</option>
+                            <option value="Class">Class</option>
+                            <option value="Date">Date</option>
+                            <option value="Party">Party</option>
+                            <option value="Formal">Formal</option>
+                            <option value="Sport">Sport</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="outfitNote">Description</label>
+                    <textarea id="outfitNote" rows="3" placeholder="What makes this combination work?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="outfitImageUrl">Outfit Image URL</label>
+                    <input type="url" id="outfitImageUrl" placeholder="Optional">
+                </div>
+
+                <div class="upload-row">
+                    <label class="upload-btn">
+                        <span id="outfitUploadText">Upload Outfit Photo</span>
+                        <input type="file" id="outfitPhotoUpload" accept="image/*">
+                    </label>
+                </div>
+
+                <div class="item-picker-heading">
+                    <div>
+                        <h3>Clothing Items</h3>
+                        <p id="selectedItemCount">0 selected</p>
+                    </div>
+                    <div class="item-picker-filters">
+                        <select id="itemClosetFilter">
+                            <option value="">All Wardrobes</option>
+                        </select>
+                        <input type="search" id="itemSearch" placeholder="Search clothes...">
+                    </div>
+                </div>
+
+                <div class="item-picker" id="outfitItemGrid">
+                    <div class="empty-state">Loading clothing items...</div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="secondary-btn" id="cancelOutfitBtn">Cancel</button>
+                    <button type="submit" class="primary-btn" id="saveOutfitBtn">Save Outfit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/outfits.js"></script>
+</body>
+</html>
