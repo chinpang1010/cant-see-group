@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCanvas() {
         const rows = selectedItems();
         if (!rows.length) {
-            canvasArea.innerHTML = '<p>Click clothes to add them</p>';
+            canvasArea.innerHTML = '<p>Your selected clothes will appear here.</p>';
             return;
         }
         canvasArea.innerHTML = rows.map((item) => itemCard(item, true)).join('');

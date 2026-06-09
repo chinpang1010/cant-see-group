@@ -115,7 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
         outfitGrid.innerHTML = rows.map((outfit) => {
             const seasonTags = values(outfit.season);
             const occasionTags = values(outfit.occasion);
-            const itemNames = values(outfit.item_names).slice(0, 4);
+            const itemNames = values(outfit.item_names);
+            const visibleItemNames = itemNames.slice(0, 3);
+            const remainingItems = Math.max(0, Number(outfit.item_count || itemNames.length) - visibleItemNames.length);
             const image = firstValue(outfit.preview_image) || firstValue(outfit.image_url);
             return `
                 <article class="outfit-card">
@@ -136,14 +138,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                 `<span class="tag">${escapeHtml(occasion)}</span>`
                             )).join('')}
                         </div>
-                        <p class="outfit-note">${escapeHtml(outfit.note || 'No description yet.')}</p>
-                        <div class="item-name-list">
-                            ${itemNames.map((name) => `<span>${escapeHtml(name)}</span>`).join('<span>+</span>')}
+                        ${outfit.note ? `<p class="outfit-note">${escapeHtml(outfit.note)}</p>` : ''}
+                        <div class="outfit-items">
+                            <span class="outfit-items-label">Includes</span>
+                            <p>
+                                ${visibleItemNames.map((name) => escapeHtml(name)).join(', ')}
+                                ${remainingItems ? `<span class="more-items">+${remainingItems} more</span>` : ''}
+                            </p>
                         </div>
                         <div class="outfit-stats">
-                            <div><span>Items</span><strong>${outfit.item_count || 0}</strong></div>
                             <div><span>Times worn</span><strong>${outfit.worn_count || 0}</strong></div>
-                            <div><span>Created</span><strong>${escapeHtml(outfit.created_date || '-')}</strong></div>
                             <div><span>Last worn</span><strong>${escapeHtml(outfit.last_worn || 'Never')}</strong></div>
                         </div>
                         <div class="outfit-actions">
