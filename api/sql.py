@@ -77,7 +77,6 @@ def init_db():
     DB.executescript(schema_sql)
     DB.commit()
     seed_data()
-    remove_test_users()
 
 # Remove all users except the default ones for testing
 def remove_test_users():
