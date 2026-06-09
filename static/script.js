@@ -210,6 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (backBtn) backBtn.style.display = 'inline-flex';
                 if (catalogTools) catalogTools.style.display = 'grid';
                 if (wardrobeTitle) wardrobeTitle.innerText = `Inside ${clickedItem.querySelector('h3').innerText}`;
+                const openedLabel = clickedItem.querySelector('.wardrobe-count');
+                if (openedLabel) openedLabel.style.display = 'none';
 
                 const closetId = Number(clickedItem.dataset.id) || 1;
                 selectCloset(closetId);
@@ -228,7 +230,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             wardrobeLayout.classList.remove('opened');
             const allItems = wardrobeContainer.querySelectorAll('.wardrobe-item');
-            allItems.forEach(item => item.classList.remove('hidden'));
+            allItems.forEach(item => {
+                item.classList.remove('hidden');
+                const countLabel = item.querySelector('.wardrobe-count');
+                if (countLabel) countLabel.style.display = 'block';
+            });
         });
     }
 
