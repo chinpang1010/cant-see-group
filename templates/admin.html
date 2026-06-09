@@ -15,7 +15,9 @@
             <a href="/" class="logo-link">What2Wear</a>
         </div>
         <div class="nav-right">
+            {% if session.get('u_id') %}
             <a href="/record" class="nav-link">Record</a>
+            {% endif %}
             <a href="/admin" class="nav-link active">Admin</a>
         </div>
     </header>
@@ -46,7 +48,7 @@
                         <tr>
                             <td>{{ user.u_id }}</td>
                             <td>{{ user.username }}</td>
-                            <td>{{ user.gender or 'Not set' }}</td>
+                            <td>{{ user.gender or 'not set' }}</td>
                             <td><span class="role-badge">{{ user.role }}</span></td>
                             <td>{{ user.closet_count }}</td>
                             <td>{{ user.item_count }}</td>

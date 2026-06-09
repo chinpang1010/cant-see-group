@@ -78,6 +78,10 @@ def init_db():
     DB.commit()
     seed_data()
 
+# Remove all users except the default ones for testing
+def remove_test_users():
+    DB.execute("DELETE FROM USER WHERE username NOT IN ('student', 'manager')")
+    DB.commit()
 
 def seed_data():
     if DB.fetchone("SELECT COUNT(*) FROM USER")[0] > 0:
