@@ -37,9 +37,12 @@ cant-see-group/
 |-- templates/
 |   |-- admin.html
 |   |-- index.html
+|   |-- outfits.html
 |   `-- record.html
 `-- static/
     |-- admin.css
+    |-- outfits.css
+    |-- outfits.js
     |-- style.css
     |-- script.js
     |-- record.css
@@ -73,7 +76,8 @@ Password: 1234
 ## Main Pages
 
 - `/`: wardrobe catalog, clothing item CRUD, search/filter, and usage reports.
-- `/record`: outfit creation and wear-history recording.
+- `/outfits`: reusable outfit creation, editing, deletion, and wear shortcuts.
+- `/record`: create a new outfit or select an existing outfit, then save a wear record.
 
 ## Main API Endpoints
 
@@ -88,8 +92,13 @@ Password: 1234
 - `DELETE /api/items/<item_id>`
 - `GET /api/outfits`
 - `POST /api/outfits`
+- `GET /api/outfits/<outfit_id>`
+- `PUT /api/outfits/<outfit_id>`
+- `DELETE /api/outfits/<outfit_id>`
 - `POST /api/records`
 - `GET /api/records`
+- `PUT /api/records/<outfit_id>`
+- `DELETE /api/records/<outfit_id>`
 - `GET /api/options`
 - `GET /api/reports`
 - `POST /api/auth/login`
@@ -126,7 +135,7 @@ The design separates multi-valued attributes into independent relations, so repe
 2. Log in with the demo account.
 3. Open a wardrobe and search/filter clothing items.
 4. Add, edit, or delete a clothing item.
-5. Go to the record page.
-6. Select clothing items to create an outfit record.
-7. Save the record.
+5. Open My Outfits and save a reusable clothing combination.
+6. Choose Record Wear, enter wear details, and save the record.
+7. Reuse the same outfit for another date without creating a duplicate outfit.
 8. Return to the home page and check the usage reports.

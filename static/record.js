@@ -1,18 +1,37 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const recordForm = document.getElementById('recordForm');
+    const existingOutfitSelect = document.getElementById('existingOutfitSelect');
+    const selectedOutfitSummary = document.getElementById('selectedOutfitSummary');
+    const newOutfitFields = document.getElementById('newOutfitFields');
+    const wardrobeSelect = document.getElementById('wardrobeSelect');
+    const outfitName = document.getElementById('outfitName');
+    const outfitDescription = document.getElementById('outfitDescription');
+    const recordDate = document.getElementById('recordDate');
+    const recordSeason = document.getElementById('recordSeason');
+    const recordWeather = document.getElementById('recordWeather');
+    const recordOccasion = document.getElementById('recordOccasion');
+    const recordMood = document.getElementById('recordMood');
+    const recordNote = document.getElementById('recordNote');
+    const searchInput = document.getElementById('recordSearchInput');
+    const categoryFilter = document.getElementById('recordCategoryFilter');
+    const clothesGrid = document.querySelector('.clothes-grid');
+    const canvasArea = document.querySelector('.canvas-area');
+    const closetPanelTitle = document.getElementById('closetPanelTitle');
+    const photoUpload = document.getElementById('photoUpload');
+    const uploadText = document.getElementById('uploadText');
+    const uploadSection = document.getElementById('recordUploadSection');
+    const saveRecordBtn = document.getElementById('saveRecordBtn');
+    const cancelEditBtn = document.getElementById('cancelRecordEditBtn');
+    const stars = [...document.querySelectorAll('.stars button')];
 
-    localStorage.removeItem('what2wearUser');
-    const currentUser = JSON.parse(sessionStorage.getItem('what2wearUser') || 'null') || {
-        u_id: 1,
-        username: 'Guest',
-        role: 'guest',
-    };
-    const recordUserLabel = document.getElementById('recordUserLabel');
-    if (recordUserLabel) {
-        recordUserLabel.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            ${currentUser.username}
-        `;
-    }
+    let outfits = [];
+    let wardrobes = [];
+    let allItems = [];
+    let selectedItemIds = [];
+    let selectedOutfit = null;
+    let rating = 0;
+    let editingRecordId = null;
+    let editingRecordDatetime = null;
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -27,15 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return String(value || '').split(',').map((part) => part.trim()).filter(Boolean)[0] || '';
     }
 
-    function query(params) {
-        const search = new URLSearchParams();
-        Object.entries(params).forEach(([key, value]) => {
-            if (value) search.set(key, value);
-        });
-        const text = search.toString();
-        return text ? `?${text}` : '';
-    }
-
     async function api(path, options = {}) {
         const response = await fetch(path, {
             headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
@@ -46,365 +56,327 @@ document.addEventListener('DOMContentLoaded', () => {
         return data;
     }
 
-    // ==========================================
-    // 1. 滿意度 Rating 
-    // ==========================================
-    const stars = document.querySelectorAll('.stars span');
-
-    if (stars.length > 0) {
+    function setRating(value) {
+        rating = Number(value) || 0;
         stars.forEach((star, index) => {
-            star.addEventListener('click', () => {
-                stars.forEach((s, i) => {
-                    s.textContent = i <= index ? '★' : '☆';
-                });
-            });
+            star.textContent = index < rating ? '\u2605' : '\u2606';
+            star.classList.toggle('active', index < rating);
         });
     }
 
-    // ==========================================
-    // 2. 衣服卡片動態載入與選擇
-    // ==========================================
-    const wardrobeSelect = document.getElementById('wardrobeSelect');
-    const clothesGrid = document.querySelector('.clothes-grid');
-    const canvasArea = document.querySelector('.canvas-area');
-    const searchInput = document.getElementById('recordSearchInput');
-    const categoryFilter = document.getElementById('recordCategoryFilter');
-    const originalCanvasText = '<p>Click clothes left to add</p>';
-    let selectedItemIds = [];
-    let currentItems = [];
-    let searchTimer = null;
+    function selectedItems() {
+        return allItems.filter((item) => selectedItemIds.includes(Number(item.item_id)));
+    }
 
-    function createClothCard(item, selected = false) {
-        const card = document.createElement('div');
-        card.className = `cloth-card${selected ? ' selected' : ''}`;
-        card.dataset.itemId = item.item_id;
-        const imageUrl = firstValue(item.image_url);
-        let cardHtml = '';
+    function filteredItems() {
+        const closetId = Number(wardrobeSelect.value || 0);
+        const query = searchInput.value.trim().toLowerCase();
+        const category = categoryFilter.value;
+        return allItems.filter((item) => {
+            const matchesCloset = !closetId || Number(item.c_id) === closetId;
+            const matchesCategory = !category || firstValue(item.category) === category;
+            const haystack = [
+                item.item_name,
+                item.category,
+                item.color,
+                item.tag,
+            ].join(' ').toLowerCase();
+            return matchesCloset && matchesCategory && (!query || haystack.includes(query));
+        });
+    }
 
-        if (imageUrl) {
-            cardHtml += `
-                <div style="width: 100%; height: 120px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
-                    <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.item_name)}" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-            `;
-        }
-
-        cardHtml += `
-            <div class="cloth-card-title">${escapeHtml(item.item_name)}</div>
-            <div class="cloth-card-meta">${escapeHtml(firstValue(item.category) || firstValue(item.tag) || '')}</div>
-            <div class="cloth-card-sub">${escapeHtml(firstValue(item.color) || '')}${item.size ? ` · ${escapeHtml(item.size)}` : ''}</div>
+    function itemCard(item, canvas = false) {
+        const isSelected = selectedItemIds.includes(Number(item.item_id));
+        const locked = Boolean(selectedOutfit);
+        const image = firstValue(item.image_url);
+        return `
+            <button
+                type="button"
+                class="cloth-card${isSelected ? ' selected' : ''}${locked ? ' locked' : ''}"
+                data-item-id="${item.item_id}"
+                ${locked || canvas ? 'disabled' : ''}
+            >
+                ${image ? `<div class="cloth-card-image"><img src="${escapeHtml(image)}" alt=""></div>` : ''}
+                <span class="cloth-card-title">${escapeHtml(item.item_name)}</span>
+                <span class="cloth-card-meta">${escapeHtml(firstValue(item.category) || firstValue(item.tag) || '')}</span>
+                <span class="cloth-card-sub">${escapeHtml(firstValue(item.color) || '')}</span>
+            </button>
         `;
-
-        card.innerHTML = cardHtml;
-
-        card.addEventListener('click', () => {
-            const itemId = Number(card.dataset.itemId);
-            if (selectedItemIds.includes(itemId)) {
-                selectedItemIds = selectedItemIds.filter((id) => id !== itemId);
-            } else {
-                selectedItemIds.push(itemId);
-            }
-            renderClothItems(currentItems);
-            renderCanvas();
-        });
-        
-        return card;
     }
 
-    function renderClothItems(items) {
-        if (!clothesGrid) return;
-        clothesGrid.innerHTML = '';
-        if (!items || items.length === 0) {
-            clothesGrid.innerHTML = '<div class="no-items">No items available</div>';
+    function renderItems() {
+        const rows = filteredItems();
+        if (!rows.length) {
+            clothesGrid.innerHTML = '<div class="no-items">No clothing items found.</div>';
             return;
         }
-        items.forEach((item) => {
-            clothesGrid.appendChild(createClothCard(item, selectedItemIds.includes(Number(item.item_id))));
-        });
+        clothesGrid.innerHTML = rows.map((item) => itemCard(item)).join('');
+        if (!selectedOutfit) {
+            clothesGrid.querySelectorAll('.cloth-card').forEach((card) => {
+                card.addEventListener('click', () => {
+                    const itemId = Number(card.dataset.itemId);
+                    selectedItemIds = selectedItemIds.includes(itemId)
+                        ? selectedItemIds.filter((id) => id !== itemId)
+                        : [...selectedItemIds, itemId];
+                    renderItems();
+                    renderCanvas();
+                });
+            });
+        }
     }
 
     function renderCanvas() {
-        if (!canvasArea) return;
-        const selected = currentItems.filter((item) => selectedItemIds.includes(Number(item.item_id)));
-        if (selected.length === 0) {
-            canvasArea.innerHTML = originalCanvasText;
+        const rows = selectedItems();
+        if (!rows.length) {
+            canvasArea.innerHTML = '<p>Click clothes to add them</p>';
             return;
         }
-        canvasArea.innerHTML = '';
-        selected.forEach((item) => {
-            const card = createClothCard(item, true);
-            canvasArea.appendChild(card);
-        });
+        canvasArea.innerHTML = rows.map((item) => itemCard(item, true)).join('');
     }
 
-    function loadWardrobes() {
-        fetch(`/api/wardrobes${query({ u_id: currentUser.u_id })}`)
-            .then((response) => response.json())
-            .then((wardrobes) => {
-                if (!wardrobeSelect) return;
-                wardrobeSelect.innerHTML = '<option value="">Select Wardrobe...</option>' + wardrobes.map((wardrobe) => (
-                    `<option value="${wardrobe.c_id}">${escapeHtml(wardrobe.c_name)}</option>`
-                )).join('');
-                if (wardrobes.length > 0) {
-                    wardrobeSelect.value = wardrobes[0].c_id;
-                    loadClothItems();
-                }
-            })
-            .catch(() => {
-                if (wardrobeSelect) wardrobeSelect.innerHTML = '<option value="">Wardrobe unavailable</option>';
-            });
-    }
-
-    function loadOptions() {
-        fetch('/api/options')
-            .then((response) => response.json())
-            .then((options) => {
-                if (!categoryFilter) return;
-                const current = categoryFilter.value;
-                categoryFilter.innerHTML = '<option value="">All</option>' + (options.categories || []).map((category) => (
-                    `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`
-                )).join('');
-                categoryFilter.value = current;
-            })
-            .catch(() => {});
-    }
-
-    function loadClothItems() {
-        if (!clothesGrid) return;
-        const closetId = wardrobeSelect?.value || '';
-        if (!closetId) {
-            clothesGrid.innerHTML = '<div class="no-items">Please select a wardrobe.</div>';
+    function renderOutfitSummary() {
+        if (!selectedOutfit) {
+            selectedOutfitSummary.hidden = true;
+            selectedOutfitSummary.innerHTML = '';
             return;
         }
-        fetch(`/api/closet/${closetId}/items${query({
-            search: searchInput?.value.trim() || '',
-            category: categoryFilter?.value || '',
-        })}`)
-            .then((response) => response.json())
-            .then((items) => {
-                currentItems = items || [];
-                selectedItemIds = selectedItemIds.filter((id) => currentItems.some((item) => Number(item.item_id) === id));
-                renderClothItems(currentItems);
-                renderCanvas();
-            })
-            .catch(() => {
-                clothesGrid.innerHTML = '<div class="no-items">無法讀取衣物，請稍後再試。</div>';
-            });
+        selectedOutfitSummary.hidden = false;
+        selectedOutfitSummary.innerHTML = `
+            <strong>${escapeHtml(selectedOutfit.outfit_name)}</strong>
+            <span>${selectedOutfit.item_count || selectedItemIds.length} items</span>
+            <span>${escapeHtml(firstValue(selectedOutfit.season) || 'Any season')}</span>
+            <span>${escapeHtml(firstValue(selectedOutfit.occasion) || 'Any occasion')}</span>
+        `;
     }
 
-    loadWardrobes();
-    loadOptions();
-    loadHistory();
+    function setExistingMode(enabled) {
+        newOutfitFields.hidden = enabled;
+        uploadSection.hidden = enabled;
+        wardrobeSelect.disabled = enabled;
+        searchInput.disabled = enabled;
+        categoryFilter.disabled = enabled;
+        closetPanelTitle.textContent = enabled ? 'Saved Outfit Items' : 'Choose Clothing';
+        renderOutfitSummary();
+        renderItems();
+        renderCanvas();
+    }
 
-    wardrobeSelect?.addEventListener('change', () => {
+    async function chooseOutfit(outfitId) {
+        if (!outfitId) {
+            selectedOutfit = null;
+            selectedItemIds = [];
+            setExistingMode(false);
+            return;
+        }
+        selectedOutfit = await api(`/api/outfits/${outfitId}`);
+        selectedItemIds = (selectedOutfit.item_ids || []).map(Number);
+        setExistingMode(true);
+    }
+
+    async function uploadPhoto() {
+        const file = photoUpload.files?.[0];
+        if (!file) return '';
+        const body = new FormData();
+        body.append('image', file);
+        const response = await fetch('/api/uploads', { method: 'POST', body });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Photo upload failed');
+        return data.image_url || '';
+    }
+
+    async function loadReferenceData() {
+        [outfits, wardrobes, allItems] = await Promise.all([
+            api('/api/outfits'),
+            api('/api/wardrobes'),
+            api('/api/items'),
+        ]);
+
+        existingOutfitSelect.innerHTML = '<option value="">Create a new outfit</option>' + outfits.map((outfit) => (
+            `<option value="${outfit.outfit_id}">${escapeHtml(outfit.outfit_name)}</option>`
+        )).join('');
+        wardrobeSelect.innerHTML = '<option value="">All Wardrobes</option>' + wardrobes.map((wardrobe) => (
+            `<option value="${wardrobe.c_id}">${escapeHtml(wardrobe.c_name)}</option>`
+        )).join('');
+
+        const categories = [...new Set(allItems.map((item) => firstValue(item.category)).filter(Boolean))].sort();
+        categoryFilter.innerHTML = '<option value="">All Categories</option>' + categories.map((category) => (
+            `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`
+        )).join('');
+
+        renderItems();
+        renderCanvas();
+
+        const requestedOutfitId = new URLSearchParams(window.location.search).get('outfit_id');
+        if (requestedOutfitId && outfits.some((outfit) => String(outfit.outfit_id) === requestedOutfitId)) {
+            existingOutfitSelect.value = requestedOutfitId;
+            await chooseOutfit(requestedOutfitId);
+        }
+    }
+
+    function resetRecordForm() {
+        recordForm.reset();
+        existingOutfitSelect.value = '';
+        selectedOutfit = null;
         selectedItemIds = [];
-        loadClothItems();
-    });
-
-    [searchInput, categoryFilter].forEach((control) => {
-        control?.addEventListener(control === searchInput ? 'input' : 'change', () => {
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(loadClothItems, 180);
-        });
-    });
-
-    // ==========================================
-    // 3. 上傳圖片打勾的動畫
-    // ==========================================
-    const photoUpload = document.getElementById('photoUpload');
-    const uploadIconWrapper = document.getElementById('uploadIconWrapper');
-    const uploadText = document.getElementById('uploadText');
-
-    if (photoUpload && uploadIconWrapper && uploadText) {
-        photoUpload.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                uploadIconWrapper.innerHTML = `
-                    <svg class="success-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                `;
-                uploadText.innerText = 'Uploaded!';
-                uploadText.classList.add('success-text');
-            }
-        });
+        editingRecordId = null;
+        editingRecordDatetime = null;
+        recordDate.value = new Date().toISOString().split('T')[0];
+        recordDate.disabled = false;
+        existingOutfitSelect.disabled = false;
+        saveRecordBtn.textContent = 'Save Wear Record';
+        cancelEditBtn.hidden = true;
+        uploadText.textContent = 'Upload New Outfit Photo';
+        setRating(0);
+        setExistingMode(false);
     }
 
-    // ==========================================
-    // 4. 儲存按鈕
-    // ==========================================
-    const recordForm = document.getElementById('recordForm');
-    const recordDate = document.getElementById('recordDate');
-    const outfitName = document.getElementById('outfitName');
-    const recordSeason = document.getElementById('recordSeason');
-    const recordWeather = document.getElementById('recordWeather');
-    const recordOccasion = document.getElementById('recordOccasion');
-    const recordMood = document.getElementById('recordMood');
-    const recordNote = document.getElementById('recordNote');
-    const saveRecordBtn = document.getElementById('saveRecordBtn');
-
-    if (recordDate) recordDate.value = new Date().toISOString().split('T')[0];
-
-    function getRecordRating() {
-        let rating = 0;
-        stars.forEach((star, index) => {
-            if (star.textContent === '★') {
-                rating = index + 1;
-            }
-        });
-        return rating;
-    }
-
-    if (recordForm) {
-        recordForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (selectedItemIds.length === 0) {
-                alert('Please select at least one clothing item.');
+    async function loadHistory() {
+        try {
+            const records = await api('/api/records');
+            const history = document.getElementById('recordHistory');
+            const rows = records.slice(0, 5);
+            if (!rows.length) {
+                history.innerHTML = '<div class="history-row"><span>No records yet.</span></div>';
                 return;
             }
-
-            const recordDateTime = editingRecordId !== null 
-                ? editingRecordDatetime 
-                : (recordDate?.value || new Date().toISOString().split('T')[0]);
-            
-            const payload = {
-                u_id: currentUser.u_id,
-                datetime: recordDateTime,
-                weather: recordWeather?.value || '',
-                mood: recordMood?.value || '',
-                rating: getRecordRating(),
-                note: recordNote?.value || '',
-                outfit_name: outfitName?.value || 'Outfit Record',
-                season: recordSeason?.value || '',
-                occasion: recordOccasion?.value || '',
-                item_ids: selectedItemIds,
-            };
-
-            const isUpdate = editingRecordId !== null;
-            const method = isUpdate ? 'PUT' : 'POST';
-            const endpoint = isUpdate ? `/api/records/${editingRecordId}` : '/api/records';
-
-            api(endpoint, {
-                method,
-                body: JSON.stringify(payload),
-            })
-                .then(() => {
-                    alert(isUpdate ? 'Record updated successfully!' : 'Record saved successfully!');
-                    if (recordNote) recordNote.value = '';
-                    if (outfitName) outfitName.value = '';
-                    if (recordMood) recordMood.value = '';
-                    if (recordDate) recordDate.value = new Date().toISOString().split('T')[0];
-                    stars.forEach((star) => { star.textContent = '☆'; });
-                    selectedItemIds = [];
-                    if (canvasArea) canvasArea.innerHTML = originalCanvasText;
-                    if (saveRecordBtn) saveRecordBtn.textContent = 'Save Record';
-                    editingRecordId = null;
-                    editingRecordDatetime = null;
-                    loadClothItems();
-                    loadHistory();
-                })
-                .catch(() => {
-                    alert('Failed to save record. Please try again.');
-                });
-        });
-    }
-
-    function loadHistory() {
-        fetch(`/api/reports${query({ u_id: currentUser.u_id })}`)
-            .then((response) => response.json())
-            .then((report) => {
-                const history = document.getElementById('recordHistory');
-                if (!history) return;
-                const rows = report.recent_records || [];
-                if (rows.length === 0) {
-                    history.innerHTML = '<div class="history-row"><span>No records yet.</span></div>';
-                    return;
-                }
-                history.innerHTML = rows.map((row) => `
-                    <div class="history-row" data-outfit-id="${row.outfit_id}" data-datetime="${row.datetime}">
-                        <div class="history-content">
-                            <strong>${escapeHtml(row.outfit_name)}</strong>
-                            <span>${escapeHtml(row.datetime)} · ${escapeHtml(row.weather || 'N/A')} · ${escapeHtml(row.rating || '-')} stars</span>
-                        </div>
-                        <div class="history-actions">
-                            <button class="edit-record-btn" data-outfit-id="${row.outfit_id}" data-datetime="${row.datetime}">Edit</button>
-                            <button class="delete-record-btn" data-outfit-id="${row.outfit_id}" data-datetime="${row.datetime}">Delete</button>
-                        </div>
+            history.innerHTML = rows.map((row) => `
+                <div class="history-row">
+                    <div class="history-content">
+                        <strong>${escapeHtml(row.outfit_name)}</strong>
+                        <span>${escapeHtml(row.datetime)} | ${escapeHtml(row.weather || 'N/A')} | ${escapeHtml(row.rating || '-')} stars</span>
                     </div>
-                `).join('');
-                
-                // Add event listeners for edit and delete buttons
-                document.querySelectorAll('.edit-record-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const outfitId = e.target.dataset.outfitId;
-                        const datetime = e.target.dataset.datetime;
-                        loadRecordForEdit(outfitId, datetime);
-                    });
-                });
-                
-                document.querySelectorAll('.delete-record-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const outfitId = e.target.dataset.outfitId;
-                        const datetime = e.target.dataset.datetime;
-                        deleteRecord(outfitId, datetime);
-                    });
-                });
-            })
-            .catch(() => {});
+                    <div class="history-actions">
+                        <button class="edit-record-btn" data-id="${row.outfit_id}" data-datetime="${escapeHtml(row.datetime)}">Edit</button>
+                        <button class="delete-record-btn" data-id="${row.outfit_id}" data-datetime="${escapeHtml(row.datetime)}">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+
+            history.querySelectorAll('.edit-record-btn').forEach((button) => {
+                button.addEventListener('click', () => editRecord(
+                    Number(button.dataset.id),
+                    button.dataset.datetime,
+                    records,
+                ));
+            });
+            history.querySelectorAll('.delete-record-btn').forEach((button) => {
+                button.addEventListener('click', () => deleteRecord(
+                    Number(button.dataset.id),
+                    button.dataset.datetime,
+                ));
+            });
+        } catch (error) {
+            document.getElementById('recordHistory').innerHTML = '<div class="history-row"><span>Unable to load records.</span></div>';
+        }
     }
 
-    let editingRecordId = null;
-    let editingRecordDatetime = null;
+    async function editRecord(outfitId, datetime, records) {
+        const record = records.find((row) => (
+            Number(row.outfit_id) === outfitId && row.datetime === datetime
+        ));
+        if (!record) return;
 
-    function loadRecordForEdit(outfitId, datetime) {
-        fetch(`/api/records${query({ u_id: currentUser.u_id })}`)
-            .then((response) => response.json())
-            .then((records) => {
-                const record = records.find(r => r.outfit_id == outfitId && r.datetime === datetime);
-                if (!record) {
-                    alert('Record not found.');
-                    return;
-                }
-                
-                // Load record data into form
-                editingRecordId = outfitId;
-                editingRecordDatetime = datetime;
-                
-                if (outfitName) outfitName.value = record.outfit_name || '';
-                if (recordDate) recordDate.value = datetime.split(' ')[0];
-                if (recordSeason) recordSeason.value = firstValue(record.season) || '';
-                if (recordWeather) recordWeather.value = record.weather || '';
-                if (recordOccasion) recordOccasion.value = firstValue(record.occasion) || '';
-                if (recordMood) recordMood.value = record.mood || '';
-                if (recordNote) recordNote.value = record.note || '';
-                
-                // Set rating
-                const rating = record.rating || 0;
-                stars.forEach((star, index) => {
-                    star.textContent = index < rating ? '★' : '☆';
-                });
-                
-                // Update submit button text
-                if (saveRecordBtn) saveRecordBtn.textContent = 'Update Record';
-                
-                // Scroll to form
-                recordForm?.scrollIntoView({ behavior: 'smooth' });
-            })
-            .catch(() => alert('Failed to load record.'));
+        editingRecordId = outfitId;
+        editingRecordDatetime = datetime;
+        existingOutfitSelect.value = String(outfitId);
+        existingOutfitSelect.disabled = true;
+        await chooseOutfit(outfitId);
+        recordDate.value = datetime.slice(0, 10);
+        recordDate.disabled = true;
+        recordWeather.value = record.weather || 'Sunny';
+        recordMood.value = record.mood || '';
+        recordNote.value = record.note || '';
+        setRating(record.rating || 0);
+        saveRecordBtn.textContent = 'Update Wear Record';
+        cancelEditBtn.hidden = false;
+        recordForm.scrollIntoView({ behavior: 'smooth' });
     }
 
-    function deleteRecord(outfitId, datetime) {
-        if (!confirm('Are you sure you want to delete this record?')) return;
-        
-        api(`/api/records/${outfitId}`, {
-            method: 'DELETE',
-            body: JSON.stringify({ datetime }),
-        })
-            .then(() => {
-                alert('Record deleted successfully!');
-                loadHistory();
-            })
-            .catch((error) => alert(error.message || 'Failed to delete record.'));
+    async function deleteRecord(outfitId, datetime) {
+        if (!confirm('Delete this wear record? The saved outfit will remain available.')) return;
+        try {
+            await api(`/api/records/${outfitId}`, {
+                method: 'DELETE',
+                body: JSON.stringify({ datetime }),
+            });
+            await loadHistory();
+        } catch (error) {
+            alert(error.message);
+        }
     }
+
+    stars.forEach((star) => {
+        star.addEventListener('click', () => setRating(star.dataset.rating));
+    });
+    existingOutfitSelect.addEventListener('change', async () => {
+        try {
+            await chooseOutfit(existingOutfitSelect.value);
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+    [wardrobeSelect, categoryFilter].forEach((control) => control.addEventListener('change', renderItems));
+    searchInput.addEventListener('input', renderItems);
+    photoUpload.addEventListener('change', () => {
+        uploadText.textContent = photoUpload.files?.[0]?.name || 'Upload New Outfit Photo';
+    });
+    cancelEditBtn.addEventListener('click', resetRecordForm);
+
+    recordForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const isEditing = editingRecordId !== null;
+        const usingExistingOutfit = Boolean(selectedOutfit);
+
+        if (!isEditing && !usingExistingOutfit) {
+            if (!outfitName.value.trim()) {
+                alert('Enter an outfit name.');
+                return;
+            }
+            if (!selectedItemIds.length) {
+                alert('Select at least one clothing item.');
+                return;
+            }
+        }
+
+        const payload = {
+            datetime: isEditing ? editingRecordDatetime : recordDate.value,
+            weather: recordWeather.value,
+            mood: recordMood.value.trim(),
+            rating,
+            note: recordNote.value.trim(),
+        };
+
+        if (!isEditing && usingExistingOutfit) {
+            payload.outfit_id = selectedOutfit.outfit_id;
+        } else if (!isEditing) {
+            payload.outfit_name = outfitName.value.trim();
+            payload.outfit_note = outfitDescription.value.trim();
+            payload.season = recordSeason.value;
+            payload.occasion = recordOccasion.value;
+            payload.item_ids = selectedItemIds;
+        }
+
+        saveRecordBtn.disabled = true;
+        try {
+            if (!isEditing && !usingExistingOutfit) {
+                payload.image_url = await uploadPhoto();
+            }
+            await api(isEditing ? `/api/records/${editingRecordId}` : '/api/records', {
+                method: isEditing ? 'PUT' : 'POST',
+                body: JSON.stringify(payload),
+            });
+            resetRecordForm();
+            await Promise.all([loadHistory(), loadReferenceData()]);
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            saveRecordBtn.disabled = false;
+        }
+    });
+
+    recordDate.value = new Date().toISOString().split('T')[0];
+    setRating(0);
+    Promise.all([loadReferenceData(), loadHistory()]).catch((error) => {
+        clothesGrid.innerHTML = `<div class="no-items">${escapeHtml(error.message)}</div>`;
+    });
 });

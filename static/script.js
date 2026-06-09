@@ -94,7 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadWardrobes() {
         fetch(`/api/wardrobes${query({ u_id: currentUser.u_id })}`)
-            .then((res) => res.json())
+            .then((res) => {
+                if (!res.ok) throw new Error('Wardrobes unavailable');
+                return res.json();
+            })
             .then((data) => {
                 wardrobes = data;
                 wardrobeCount = Math.min(data.length, MAX_WARDROBES);
@@ -104,6 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadReports();
             })
             .catch(() => {
+                wardrobes = [];
+                wardrobeCount = 0;
+                currentClosetId = null;
                 renderWardrobes();
             });
     }
@@ -120,7 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadClosetItems(closetId) {
         currentClosetId = closetId;
         fetch(`/api/closet/${closetId}/items${query(currentFilters())}`)
-            .then((res) => res.json())
+            .then((res) => {
+                if (!res.ok) throw new Error('Clothing items unavailable');
+                return res.json();
+            })
             .then((data) => {
                 clothesData = data;
                 if (wardrobeLayout.classList.contains('opened')) {
@@ -547,6 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!navRight) return;
         const adminLink = canOpenAdmin(currentUser) ? '<a href="/admin" class="nav-record-link">Admin</a>' : '';
         navRight.innerHTML = `
+            <a href="/outfits" class="nav-record-link">Outfits</a>
             <a href="/record" class="nav-record-link">Record</a>
             ${adminLink}
             <div class="user-profile">

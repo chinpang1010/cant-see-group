@@ -9,57 +9,94 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body
+    data-user-id="{{ session.get('u_id') }}"
+    data-user-name="{{ session.get('username', '') }}"
+>
     <header class="navbar">
         <div class="nav-logo">
             <a href="/" class="logo-link">What2Wear</a>
         </div>
         <div class="nav-right">
+            <a href="/" class="nav-link">Wardrobes</a>
+            <a href="/outfits" class="nav-link">Outfits</a>
+            <a href="/record" class="nav-link active">Record</a>
             {% if session.get('role') in ['admin', 'manager'] %}
             <a href="/admin" class="nav-link">Admin</a>
             {% endif %}
             <span class="login" id="recordUserLabel">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                student
+                {{ session.get('username') }}
             </span>
         </div>
     </header>
 
     <main class="record-container">
-        
         <section class="left-panel panel">
-            <h2 class="panel-title">Details</h2>
+            <h2 class="panel-title">Wear Details</h2>
             <form class="record-form" id="recordForm">
                 <div class="form-group">
-                    <label>Wardrobe</label>
-                    <select id="wardrobeSelect">
-                        <option value="">Select Wardrobe...</option>
+                    <label for="existingOutfitSelect">Outfit</label>
+                    <select id="existingOutfitSelect">
+                        <option value="">Create a new outfit</option>
                     </select>
+                    <p class="form-help">Choose a saved outfit, or build a new one below.</p>
                 </div>
 
-                <div class="form-group">
-                    <label>Outfit Name</label>
-                    <input type="text" id="outfitName" placeholder="e.g., Campus Comfort" required>
-                </div>
-                
-                <div class="form-group-row">
+                <div id="selectedOutfitSummary" class="selected-outfit-summary" hidden></div>
+
+                <div id="newOutfitFields">
                     <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" id="recordDate">
-                    </div>
-                    <div class="form-group">
-                        <label>Season</label>
-                        <select id="recordSeason">
-                            <option value="Spring">Spring</option>
-                            <option value="Summer">Summer</option>
-                            <option value="Autumn">Autumn</option>
-                            <option value="Winter">Winter</option>
+                        <label for="wardrobeSelect">Wardrobe Filter</label>
+                        <select id="wardrobeSelect">
+                            <option value="">All Wardrobes</option>
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label for="outfitName">Outfit Name</label>
+                        <input type="text" id="outfitName" placeholder="e.g., Campus Comfort" maxlength="120">
+                    </div>
+
+                    <div class="form-group-row">
+                        <div class="form-group">
+                            <label for="recordSeason">Season</label>
+                            <select id="recordSeason">
+                                <option value="">Not specified</option>
+                                <option value="Spring">Spring</option>
+                                <option value="Summer">Summer</option>
+                                <option value="Autumn">Autumn</option>
+                                <option value="Winter">Winter</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="recordOccasion">Occasion</label>
+                            <select id="recordOccasion">
+                                <option value="">Not specified</option>
+                                <option value="Casual">Casual</option>
+                                <option value="Work">Work</option>
+                                <option value="Class">Class</option>
+                                <option value="Date">Date</option>
+                                <option value="Party">Party</option>
+                                <option value="Formal">Formal</option>
+                                <option value="Sport">Sport</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="outfitDescription">Outfit Description</label>
+                        <textarea id="outfitDescription" rows="2" placeholder="Optional description for the reusable outfit"></textarea>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Weather</label>
+                    <label for="recordDate">Date</label>
+                    <input type="date" id="recordDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="recordWeather">Weather</label>
                     <select id="recordWeather">
                         <option value="Sunny">Sunny</option>
                         <option value="Cloudy">Cloudy</option>
@@ -70,41 +107,35 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Occasion</label>
-                    <select id="recordOccasion">
-                        <option value="Casual">Casual</option>
-                        <option value="Work">Work</option>
-                        <option value="Class">Class</option>
-                        <option value="Date">Date</option>
-                        <option value="Party">Party</option>
-                        <option value="Formal">Formal</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Mood</label>
+                    <label for="recordMood">Mood</label>
                     <input type="text" id="recordMood" placeholder="e.g., Happy">
                 </div>
 
                 <div class="form-group">
                     <label>Rating</label>
-                    <div class="stars">
-                        <span>☆</span><span>☆</span><span>☆</span><span>☆</span><span>☆</span>
+                    <div class="stars" aria-label="Outfit rating">
+                        <button type="button" data-rating="1" aria-label="1 star">&#9734;</button>
+                        <button type="button" data-rating="2" aria-label="2 stars">&#9734;</button>
+                        <button type="button" data-rating="3" aria-label="3 stars">&#9734;</button>
+                        <button type="button" data-rating="4" aria-label="4 stars">&#9734;</button>
+                        <button type="button" data-rating="5" aria-label="5 stars">&#9734;</button>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Notes</label>
-                    <textarea id="recordNote" rows="4" placeholder="Write down your thoughts about this outfit..."></textarea>
+                    <label for="recordNote">Wear Notes</label>
+                    <textarea id="recordNote" rows="4" placeholder="How did this outfit feel today?"></textarea>
                 </div>
             </form>
         </section>
 
         <section class="mid-panel panel">
-            <h2 class="panel-title">Your Closet</h2>
+            <h2 class="panel-title" id="closetPanelTitle">Choose Clothing</h2>
             <div class="record-filter-row">
                 <input type="search" id="recordSearchInput" placeholder="Search clothes...">
-                <select id="recordCategoryFilter"><option value="">All</option></select>
+                <select id="recordCategoryFilter">
+                    <option value="">All Categories</option>
+                </select>
             </div>
             <div class="clothes-grid">
                 <div class="no-items">Loading clothes...</div>
@@ -113,29 +144,26 @@
 
         <section class="right-panel panel">
             <h2 class="panel-title">Outfit Canvas</h2>
-            
+
             <div class="canvas-area">
-                <p>Click clothes left to add</p>
+                <p>Click clothes to add them</p>
             </div>
 
-            <div class="upload-section-minimal">
+            <div class="upload-section-minimal" id="recordUploadSection">
                 <label class="minimal-upload-btn">
-                    <span id="uploadIconWrapper">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                    </span>
-                    <span id="uploadText">Upload Photo</span>
-                    <input type="file" id="photoUpload" accept="image/*" style="display: none;">
+                    <span id="uploadText">Upload New Outfit Photo</span>
+                    <input type="file" id="photoUpload" accept="image/*">
                 </label>
             </div>
 
-            <button class="save-btn" id="saveRecordBtn" form="recordForm">Save Record</button>
+            <button class="save-btn" id="saveRecordBtn" form="recordForm">Save Wear Record</button>
+            <button class="cancel-edit-btn" id="cancelRecordEditBtn" type="button" hidden>Cancel Edit</button>
 
             <div class="record-history">
                 <h3>Recent Records</h3>
                 <div id="recordHistory"></div>
             </div>
         </section>
-
     </main>
 
     <script src="/static/record.js"></script>
