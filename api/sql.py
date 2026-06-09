@@ -439,8 +439,16 @@ class ClothItem:
     def touch_worn(item_ids, worn_date):
         for item_id in _as_list(item_ids):
             DB.execute(
-                "UPDATE CLOTH_ITEM SET last_worn = ? WHERE item_id = ?",
-                (worn_date, item_id),
+                """
+                UPDATE CLOTH_ITEM
+                SET last_worn = CASE
+                    WHEN last_worn IS NULL OR last_worn = '' OR last_worn < ?
+                    THEN ?
+                    ELSE last_worn
+                END
+                WHERE item_id = ?
+                """,
+                (worn_date, worn_date, item_id),
             )
 
     @staticmethod
@@ -695,7 +703,7 @@ class Record:
         if not outfit_id:
             outfit_id = Outfit.add(
                 {
-                    "u_id": data.get("u_id", 1),
+                    "u_id": data.get("owner_id", 1),
                     "outfit_name": data.get("outfit_name", "Outfit Record"),
                     "note": data.get("outfit_note", ""),
                     "season": data.get("season", ""),

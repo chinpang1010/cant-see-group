@@ -481,7 +481,7 @@ def api_records():
                 "rating": rating,
                 "note": _scalar(data, "note", ""),
                 "outfit_id": outfit_id,
-                "u_id": user_id,
+                "owner_id": user_id,
                 "outfit_name": _scalar(data, "outfit_name", "Outfit Record"),
                 "outfit_note": _scalar(data, "outfit_note", ""),
                 "season": data.get("season", ""),
