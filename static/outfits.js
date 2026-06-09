@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const itemSearch = document.getElementById('itemSearch');
     const photoUpload = document.getElementById('outfitPhotoUpload');
     const uploadText = document.getElementById('outfitUploadText');
+    const logoutBtn = document.getElementById('logoutBtn');
 
     let outfits = [];
     let wardrobes = [];
@@ -43,6 +44,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!response.ok) throw new Error(data.error || 'Request failed');
         return data;
     }
+
+    logoutBtn?.addEventListener('click', async (event) => {
+        event.preventDefault();
+        try {
+            await api('/api/auth/logout', { method: 'POST' });
+            localStorage.removeItem('what2wearUser');
+            sessionStorage.removeItem('what2wearUser');
+            window.location.href = '/';
+        } catch (error) {
+            alert(error.message);
+        }
+    });
 
     async function uploadPhoto() {
         const file = photoUpload?.files?.[0];

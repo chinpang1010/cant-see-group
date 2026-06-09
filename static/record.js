@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadSection = document.getElementById('recordUploadSection');
     const saveRecordBtn = document.getElementById('saveRecordBtn');
     const cancelEditBtn = document.getElementById('cancelRecordEditBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const stars = [...document.querySelectorAll('.stars button')];
 
     let outfits = [];
@@ -55,6 +56,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!response.ok) throw new Error(data.error || 'Request failed');
         return data;
     }
+
+    logoutBtn?.addEventListener('click', async (event) => {
+        event.preventDefault();
+        try {
+            await api('/api/auth/logout', { method: 'POST' });
+            localStorage.removeItem('what2wearUser');
+            sessionStorage.removeItem('what2wearUser');
+            window.location.href = '/';
+        } catch (error) {
+            alert(error.message);
+        }
+    });
 
     function setRating(value) {
         rating = Number(value) || 0;

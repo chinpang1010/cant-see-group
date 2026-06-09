@@ -81,7 +81,22 @@ textarea {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    cursor: pointer;
+    font-family: 'Lato', sans-serif;
+    font-weight: 700;
+}
+
+.logout-btn {
+    margin-left: -0.8rem;
+    padding-left: 1.2rem;
+    color: #8b8b70;
+    border-left: 1px solid var(--grey);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.logout-btn:hover {
+    color: var(--text-dark);
 }
 
 /* --- Layout Container --- */
