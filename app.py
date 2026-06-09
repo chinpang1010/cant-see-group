@@ -327,6 +327,29 @@ def api_records():
     return jsonify({"success": True, "outfit_id": outfit_id}), 201
 
 
+@app.route("/api/records/<int:outfit_id>", methods=["PUT", "DELETE"])
+def api_record_detail(outfit_id):
+    data = _payload()
+    datetime_str = _scalar(data, "datetime", "")
+    
+    if request.method == "DELETE":
+        Record.delete(outfit_id, datetime_str)
+        return jsonify({"success": True})
+    
+    if request.method == "PUT":
+        Record.update(outfit_id, datetime_str, {
+            "rating": int(_scalar(data, "rating", 0) or 0) or None,
+            "weather": _scalar(data, "weather", ""),
+            "mood": _scalar(data, "mood", ""),
+            "note": _scalar(data, "note", ""),
+            "outfit_name": _scalar(data, "outfit_name", ""),
+            "outfit_note": _scalar(data, "outfit_note", ""),
+            "season": _scalar(data, "season", ""),
+            "occasion": _scalar(data, "occasion", ""),
+        })
+        return jsonify({"success": True})
+
+
 @app.route("/api/options")
 def api_options():
     return jsonify(ClothItem.options())

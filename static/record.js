@@ -242,6 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const recordOccasion = document.getElementById('recordOccasion');
     const recordMood = document.getElementById('recordMood');
     const recordNote = document.getElementById('recordNote');
+    const saveRecordBtn = document.getElementById('saveRecordBtn');
 
     if (recordDate) recordDate.value = new Date().toISOString().split('T')[0];
 
@@ -263,9 +264,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            const recordDateTime = editingRecordId !== null 
+                ? editingRecordDatetime 
+                : (recordDate?.value || new Date().toISOString().split('T')[0]);
+            
             const payload = {
                 u_id: currentUser.u_id,
-                datetime: recordDate?.value || new Date().toISOString().split('T')[0],
+                datetime: recordDateTime,
                 weather: recordWeather?.value || '',
                 mood: recordMood?.value || '',
                 rating: getRecordRating(),
@@ -276,12 +281,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 item_ids: selectedItemIds,
             };
 
-            api('/api/records', {
-                method: 'POST',
+            const isUpdate = editingRecordId !== null;
+            const method = isUpdate ? 'PUT' : 'POST';
+            const endpoint = isUpdate ? `/api/records/${editingRecordId}` : '/api/records';
+
+            api(endpoint, {
+                method,
                 body: JSON.stringify(payload),
             })
                 .then(() => {
-                    alert('Outfit Record Saved Successfully!');
+                    alert(isUpdate ? 'Record updated successfully!' : 'Record saved successfully!');
                     if (recordNote) recordNote.value = '';
                     if (outfitName) outfitName.value = '';
                     if (recordMood) recordMood.value = '';
@@ -289,11 +298,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     stars.forEach((star) => { star.textContent = '☆'; });
                     selectedItemIds = [];
                     if (canvasArea) canvasArea.innerHTML = originalCanvasText;
+                    if (saveRecordBtn) saveRecordBtn.textContent = 'Save Record';
+                    editingRecordId = null;
+                    editingRecordDatetime = null;
                     loadClothItems();
                     loadHistory();
                 })
                 .catch(() => {
-                    alert('保存失敗，請稍後再試。');
+                    alert('Failed to save record. Please try again.');
                 });
         });
     }
@@ -310,12 +322,89 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 history.innerHTML = rows.map((row) => `
-                    <div class="history-row">
-                        <strong>${escapeHtml(row.outfit_name)}</strong>
-                        <span>${escapeHtml(row.datetime)} · ${escapeHtml(row.weather || 'N/A')} · ${escapeHtml(row.rating || '-')} stars</span>
+                    <div class="history-row" data-outfit-id="${row.outfit_id}" data-datetime="${row.datetime}">
+                        <div class="history-content">
+                            <strong>${escapeHtml(row.outfit_name)}</strong>
+                            <span>${escapeHtml(row.datetime)} · ${escapeHtml(row.weather || 'N/A')} · ${escapeHtml(row.rating || '-')} stars</span>
+                        </div>
+                        <div class="history-actions">
+                            <button class="edit-record-btn" data-outfit-id="${row.outfit_id}" data-datetime="${row.datetime}">Edit</button>
+                            <button class="delete-record-btn" data-outfit-id="${row.outfit_id}" data-datetime="${row.datetime}">Delete</button>
+                        </div>
                     </div>
                 `).join('');
+                
+                // Add event listeners for edit and delete buttons
+                document.querySelectorAll('.edit-record-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const outfitId = e.target.dataset.outfitId;
+                        const datetime = e.target.dataset.datetime;
+                        loadRecordForEdit(outfitId, datetime);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-record-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const outfitId = e.target.dataset.outfitId;
+                        const datetime = e.target.dataset.datetime;
+                        deleteRecord(outfitId, datetime);
+                    });
+                });
             })
             .catch(() => {});
+    }
+
+    let editingRecordId = null;
+    let editingRecordDatetime = null;
+
+    function loadRecordForEdit(outfitId, datetime) {
+        fetch(`/api/records${query({ u_id: currentUser.u_id })}`)
+            .then((response) => response.json())
+            .then((records) => {
+                const record = records.find(r => r.outfit_id == outfitId && r.datetime === datetime);
+                if (!record) {
+                    alert('Record not found.');
+                    return;
+                }
+                
+                // Load record data into form
+                editingRecordId = outfitId;
+                editingRecordDatetime = datetime;
+                
+                if (outfitName) outfitName.value = record.outfit_name || '';
+                if (recordDate) recordDate.value = datetime.split(' ')[0];
+                if (recordSeason) recordSeason.value = firstValue(record.season) || '';
+                if (recordWeather) recordWeather.value = record.weather || '';
+                if (recordOccasion) recordOccasion.value = firstValue(record.occasion) || '';
+                if (recordMood) recordMood.value = record.mood || '';
+                if (recordNote) recordNote.value = record.note || '';
+                
+                // Set rating
+                const rating = record.rating || 0;
+                stars.forEach((star, index) => {
+                    star.textContent = index < rating ? '★' : '☆';
+                });
+                
+                // Update submit button text
+                if (saveRecordBtn) saveRecordBtn.textContent = 'Update Record';
+                
+                // Scroll to form
+                recordForm?.scrollIntoView({ behavior: 'smooth' });
+            })
+            .catch(() => alert('Failed to load record.'));
+    }
+
+    function deleteRecord(outfitId, datetime) {
+        if (!confirm('Are you sure you want to delete this record?')) return;
+        
+        api(`/api/records/${outfitId}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ datetime }),
+        })
+            .then(() => {
+                alert('Record deleted successfully!');
+                loadHistory();
+            })
+            .catch((error) => alert(error.message || 'Failed to delete record.'));
     }
 });

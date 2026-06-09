@@ -576,6 +576,64 @@ class Record:
         sql += " GROUP BY R.outfit_id, R.datetime ORDER BY R.datetime DESC"
         return DB.fetchall(sql, tuple(params))
 
+    @staticmethod
+    def update(outfit_id, datetime_str, data):
+        """Update an existing record"""
+        DB.execute(
+            """
+            UPDATE RECORD
+            SET rating = ?, weather = ?, note = ?, mood = ?
+            WHERE outfit_id = ? AND datetime = ?
+            """,
+            (
+                data.get("rating"),
+                data.get("weather", ""),
+                data.get("note", ""),
+                data.get("mood", ""),
+                outfit_id,
+                datetime_str,
+            ),
+        )
+        
+        # Update outfit metadata if provided
+        if data.get("outfit_name") or data.get("season") or data.get("occasion"):
+            DB.execute(
+                "UPDATE OUTFIT SET outfit_name = ?, note = ? WHERE outfit_id = ?",
+                (
+                    data.get("outfit_name", ""),
+                    data.get("outfit_note", ""),
+                    outfit_id,
+                ),
+            )
+            
+            # Update season and occasion tables
+            if data.get("season"):
+                DB.execute("DELETE FROM OUTFIT_SEASON WHERE outfit_id = ?", (outfit_id,))
+                DB.execute(
+                    "INSERT INTO OUTFIT_SEASON (outfit_id, season) VALUES (?, ?)",
+                    (outfit_id, data.get("season")),
+                )
+            
+            if data.get("occasion"):
+                DB.execute("DELETE FROM OUTFIT_OCCASION WHERE outfit_id = ?", (outfit_id,))
+                DB.execute(
+                    "INSERT INTO OUTFIT_OCCASION (outfit_id, occasion) VALUES (?, ?)",
+                    (outfit_id, data.get("occasion")),
+                )
+        
+        DB.commit()
+        return True
+
+    @staticmethod
+    def delete(outfit_id, datetime_str):
+        """Delete a record"""
+        DB.execute(
+            "DELETE FROM RECORD WHERE outfit_id = ? AND datetime = ?",
+            (outfit_id, datetime_str),
+        )
+        DB.commit()
+        return True
+
 
 class Reports:
     @staticmethod

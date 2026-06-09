@@ -377,6 +377,14 @@ textarea {
     padding: 0.65rem 0;
     border-bottom: 1px solid var(--grey);
     font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.history-content {
+    flex: 1;
 }
 
 .history-row strong {
@@ -386,6 +394,39 @@ textarea {
 
 .history-row span {
     color: #7b7a62;
+}
+
+.history-actions {
+    display: flex;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.edit-record-btn,
+.delete-record-btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--olive-green);
+    background-color: transparent;
+    color: var(--olive-green);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-record-btn:hover {
+    background-color: var(--olive-green);
+    color: white;
+}
+
+.delete-record-btn {
+    border-color: #d74e42;
+    color: #d74e42;
+}
+
+.delete-record-btn:hover {
+    background-color: #d74e42;
+    color: white;
 }
 
 /* --- 上傳成功動畫 --- */
