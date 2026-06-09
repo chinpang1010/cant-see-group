@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What2Wear | Record Outfit</title>
     <link rel="stylesheet" href="/static/record.css">
+    <link rel="stylesheet" href="/static/nav.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
@@ -18,13 +19,13 @@
             <a href="/" class="logo-link">What2Wear</a>
         </div>
         <div class="nav-right">
-            <a href="/" class="nav-link">Wardrobes</a>
+            <a href="/" class="nav-link">Home</a>
             <a href="/outfits" class="nav-link">Outfits</a>
-            <a href="/record" class="nav-link active">Record</a>
+            <a href="/record" class="nav-link active" aria-current="page">Record</a>
             {% if session.get('role') in ['admin', 'manager'] %}
             <a href="/admin" class="nav-link">Admin</a>
             {% endif %}
-            <span class="login" id="recordUserLabel">
+            <span class="user-profile" id="recordUserLabel">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 {{ session.get('username') }}
             </span>
@@ -32,16 +33,30 @@
         </div>
     </header>
 
-    <main class="record-container">
+    <main class="record-page">
+        <section class="record-page-heading">
+            <p class="eyebrow">Wear tracking</p>
+            <h1>Record What You Wore</h1>
+            <p>Complete the three steps below. Start with a saved outfit, or create a new combination.</p>
+        </section>
+
+        <div class="record-container">
         <section class="left-panel panel">
-            <h2 class="panel-title">Wear Details</h2>
+            <div class="panel-title">
+                <span class="step-number">1</span>
+                <div>
+                    <span class="step-label">Step 1</span>
+                    <h2>Wear Details</h2>
+                    <p>Choose an outfit and add today's essentials.</p>
+                </div>
+            </div>
             <form class="record-form" id="recordForm">
                 <div class="form-group">
-                    <label for="existingOutfitSelect">Outfit</label>
+                    <label for="existingOutfitSelect">Start From</label>
                     <select id="existingOutfitSelect">
                         <option value="">Create a new outfit</option>
                     </select>
-                    <p class="form-help">Choose a saved outfit, or build a new one below.</p>
+                    <p class="form-help">Select a saved outfit to record it quickly.</p>
                 </div>
 
                 <div id="selectedOutfitSummary" class="selected-outfit-summary" hidden></div>
@@ -106,34 +121,46 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="recordMood">Mood</label>
-                    <input type="text" id="recordMood" placeholder="e.g., Happy">
-                </div>
+                <details class="optional-details">
+                    <summary>Optional details</summary>
+                    <div class="optional-details-content">
+                        <div class="form-group">
+                            <label for="recordMood">Mood</label>
+                            <input type="text" id="recordMood" placeholder="e.g., Happy">
+                        </div>
 
-                <div class="form-group">
-                    <label>Rating</label>
-                    <div class="stars" aria-label="Outfit rating">
-                        <button type="button" data-rating="1" aria-label="1 star">&#9734;</button>
-                        <button type="button" data-rating="2" aria-label="2 stars">&#9734;</button>
-                        <button type="button" data-rating="3" aria-label="3 stars">&#9734;</button>
-                        <button type="button" data-rating="4" aria-label="4 stars">&#9734;</button>
-                        <button type="button" data-rating="5" aria-label="5 stars">&#9734;</button>
+                        <div class="form-group">
+                            <label>Rating</label>
+                            <div class="stars" aria-label="Outfit rating">
+                                <button type="button" data-rating="1" aria-label="1 star">&#9734;</button>
+                                <button type="button" data-rating="2" aria-label="2 stars">&#9734;</button>
+                                <button type="button" data-rating="3" aria-label="3 stars">&#9734;</button>
+                                <button type="button" data-rating="4" aria-label="4 stars">&#9734;</button>
+                                <button type="button" data-rating="5" aria-label="5 stars">&#9734;</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="recordNote">Wear Notes</label>
+                            <textarea id="recordNote" rows="3" placeholder="How did this outfit feel today?"></textarea>
+                        </div>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="recordNote">Wear Notes</label>
-                    <textarea id="recordNote" rows="4" placeholder="How did this outfit feel today?"></textarea>
-                </div>
+                </details>
             </form>
         </section>
 
         <section class="mid-panel panel">
-            <h2 class="panel-title" id="closetPanelTitle">Choose Clothing</h2>
+            <div class="panel-title">
+                <span class="step-number">2</span>
+                <div>
+                    <span class="step-label">Step 2</span>
+                    <h2 id="closetPanelTitle">Choose Clothing</h2>
+                    <p>Click an item to add or remove it.</p>
+                </div>
+            </div>
             <div class="record-filter-row">
-                <input type="search" id="recordSearchInput" placeholder="Search clothes...">
-                <select id="recordCategoryFilter">
+                <input type="search" id="recordSearchInput" aria-label="Search clothes" placeholder="Search clothes...">
+                <select id="recordCategoryFilter" aria-label="Filter by category">
                     <option value="">All Categories</option>
                 </select>
             </div>
@@ -143,10 +170,17 @@
         </section>
 
         <section class="right-panel panel">
-            <h2 class="panel-title">Outfit Canvas</h2>
+            <div class="panel-title">
+                <span class="step-number">3</span>
+                <div>
+                    <span class="step-label">Step 3</span>
+                    <h2>Review & Save</h2>
+                    <p>Check the outfit, then save your wear record.</p>
+                </div>
+            </div>
 
             <div class="canvas-area">
-                <p>Click clothes to add them</p>
+                <p>Your selected clothes will appear here.</p>
             </div>
 
             <div class="upload-section-minimal" id="recordUploadSection">
@@ -158,11 +192,18 @@
 
             <button class="save-btn" id="saveRecordBtn" form="recordForm">Save Wear Record</button>
             <button class="cancel-edit-btn" id="cancelRecordEditBtn" type="button" hidden>Cancel Edit</button>
+        </section>
+        </div>
 
-            <div class="record-history">
-                <h3>Recent Records</h3>
-                <div id="recordHistory"></div>
+        <section class="record-history-panel">
+            <div class="history-heading">
+                <div>
+                    <p class="eyebrow">History</p>
+                    <h2>Recent Records</h2>
+                </div>
+                <p>Your latest wear entries, ready to review or edit.</p>
             </div>
+            <div class="record-history" id="recordHistory"></div>
         </section>
     </main>
 

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What2Wear | Admin</title>
     <link rel="stylesheet" href="/static/admin.css">
+    <link rel="stylesheet" href="/static/nav.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
@@ -15,11 +16,15 @@
             <a href="/" class="logo-link">What2Wear</a>
         </div>
         <div class="nav-right">
-            {% if session.get('u_id') %}
+            <a href="/" class="nav-link">Home</a>
             <a href="/outfits" class="nav-link">Outfits</a>
             <a href="/record" class="nav-link">Record</a>
-            {% endif %}
-            <a href="/admin" class="nav-link active">Admin</a>
+            <a href="/admin" class="nav-link active" aria-current="page">Admin</a>
+            <span class="user-profile">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                {{ session.get('username') }}
+            </span>
+            <a href="#" class="logout-btn" id="logoutBtn">Log Out</a>
         </div>
     </header>
 
@@ -64,5 +69,6 @@
             </div>
         </section>
     </main>
+    <script src="/static/admin.js"></script>
 </body>
 </html>
