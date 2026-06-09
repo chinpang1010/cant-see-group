@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const photoUpload = document.getElementById('outfitPhotoUpload');
     const uploadText = document.getElementById('outfitUploadText');
     const logoutBtn = document.getElementById('logoutBtn');
+    const canonicalSeasons = [...seasonFilter.options]
+        .map((option) => option.value)
+        .filter(Boolean);
 
     let outfits = [];
     let wardrobes = [];
@@ -78,7 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function refreshOutfitFilters() {
-        const seasons = [...new Set(outfits.flatMap((outfit) => values(outfit.season)))].sort();
+        const storedSeasons = outfits.flatMap((outfit) => values(outfit.season));
+        const extraSeasons = [...new Set(
+            storedSeasons.filter((season) => !canonicalSeasons.includes(season))
+        )].sort();
+        const seasons = [...canonicalSeasons, ...extraSeasons];
         const occasions = [...new Set(outfits.flatMap((outfit) => values(outfit.occasion)))].sort();
         fillFilter(seasonFilter, seasons, 'All Seasons');
         fillFilter(occasionFilter, occasions, 'All Occasions');
@@ -106,7 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         outfitGrid.innerHTML = rows.map((outfit) => {
-            const tags = [...values(outfit.season), ...values(outfit.occasion)];
+            const seasonTags = values(outfit.season);
+            const occasionTags = values(outfit.occasion);
             const itemNames = values(outfit.item_names).slice(0, 4);
             const image = firstValue(outfit.preview_image) || firstValue(outfit.image_url);
             return `
@@ -119,9 +127,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="outfit-card-body">
                         <h2>${escapeHtml(outfit.outfit_name)}</h2>
                         <div class="tag-row">
-                            ${tags.length
-                                ? tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('')
-                                : '<span class="tag">Any season</span>'}
+                            ${seasonTags.length
+                                ? seasonTags.map((season) => (
+                                    `<span class="tag season-tag season-${escapeHtml(season.toLowerCase())}">${escapeHtml(season)}</span>`
+                                )).join('')
+                                : '<span class="tag season-tag">Any season</span>'}
+                            ${occasionTags.map((occasion) => (
+                                `<span class="tag">${escapeHtml(occasion)}</span>`
+                            )).join('')}
                         </div>
                         <p class="outfit-note">${escapeHtml(outfit.note || 'No description yet.')}</p>
                         <div class="item-name-list">

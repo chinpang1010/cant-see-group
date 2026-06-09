@@ -15,6 +15,7 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 UPLOAD_DIR = Path(app.root_path) / "static" / "uploads"
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 ADMIN_ROLES = {"admin", "manager"}
+SEASONS = ("Spring", "Summer", "Autumn", "Winter")
 
 init_db()
 
@@ -66,6 +67,26 @@ def _rating(data):
     return value
 
 
+def _season_values(data):
+    value = data.get("season", "")
+    values = value if isinstance(value, list) else str(value).split(",")
+    canonical = {season.lower(): season for season in SEASONS}
+    seasons = []
+
+    for item in values:
+        text = str(item).strip()
+        if not text:
+            continue
+        season = canonical.get(text.lower())
+        if not season:
+            raise ValueError(
+                f"Season must be one of: {', '.join(SEASONS)}."
+            )
+        if season not in seasons:
+            seasons.append(season)
+    return seasons
+
+
 def _item_filters(extra=None):
     filters = {
         "q": request.args.get("search", "").strip(),
@@ -108,7 +129,7 @@ def index_alias():
 def record():
     if not session.get("u_id"):
         return redirect(url_for("index"))
-    return render_template("record.html")
+    return render_template("record.html", seasons=SEASONS)
 
 
 @app.route("/record.html")
@@ -120,7 +141,7 @@ def record_alias():
 def outfits():
     if not session.get("u_id"):
         return redirect(url_for("index"))
-    return render_template("outfits.html")
+    return render_template("outfits.html", seasons=SEASONS)
 
 
 @app.route("/outfits.html")
@@ -377,12 +398,17 @@ def api_outfits():
     if set(owned_item_ids) != set(item_ids):
         return _error("One or more clothing items do not belong to this user.", 403)
 
+    try:
+        seasons = _season_values(data)
+    except ValueError as error:
+        return _error(str(error))
+
     outfit_id = Outfit.add(
         {
             "u_id": user_id,
             "outfit_name": name,
             "note": _scalar(data, "note", ""),
-            "season": data.get("season", ""),
+            "season": seasons,
             "occasion": data.get("occasion", ""),
             "image_url": data.get("image_url", ""),
         },
@@ -428,13 +454,18 @@ def api_outfit_detail(outfit_id):
             409,
         )
 
+    try:
+        seasons = _season_values(data)
+    except ValueError as error:
+        return _error(str(error))
+
     Outfit.update(
         outfit_id,
         user_id,
         {
             "outfit_name": name,
             "note": _scalar(data, "note", ""),
-            "season": data.get("season", ""),
+            "season": seasons,
             "occasion": data.get("occasion", ""),
             "image_url": data.get("image_url", ""),
         },
@@ -473,6 +504,7 @@ def api_records():
 
     try:
         rating = _rating(data)
+        seasons = _season_values(data) if not outfit_id else []
         outfit_id = Record.add(
             {
                 "datetime": _scalar(data, "datetime", ""),
@@ -484,7 +516,7 @@ def api_records():
                 "owner_id": user_id,
                 "outfit_name": _scalar(data, "outfit_name", "Outfit Record"),
                 "outfit_note": _scalar(data, "outfit_note", ""),
-                "season": data.get("season", ""),
+                "season": seasons,
                 "occasion": data.get("occasion", ""),
                 "image_url": data.get("image_url", ""),
                 "item_ids": item_ids,

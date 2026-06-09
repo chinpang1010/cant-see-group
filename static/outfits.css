@@ -243,6 +243,30 @@ textarea {
     font-weight: 700;
 }
 
+.season-tag {
+    border: 1px solid transparent;
+}
+
+.season-spring {
+    background: #e4f1cf;
+    border-color: #bdd19e;
+}
+
+.season-summer {
+    background: #fff0b8;
+    border-color: #e5ca70;
+}
+
+.season-autumn {
+    background: #f2d0ad;
+    border-color: #cf9a65;
+}
+
+.season-winter {
+    background: #dceaf3;
+    border-color: #9fbdcf;
+}
+
 .outfit-note {
     min-height: 2.8rem;
     margin: 0.8rem 0;
