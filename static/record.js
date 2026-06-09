@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let rating = 0;
     let editingRecordId = null;
     let editingRecordDatetime = null;
+    let draggedItemId = null;
+    let draggedFromCanvas = false;
+    let droppedOnCanvas = false;
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -98,18 +101,46 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function addSelectedItem(itemId) {
+        if (selectedOutfit || selectedItemIds.includes(itemId)) return;
+        selectedItemIds = [...selectedItemIds, itemId];
+        renderItems();
+        renderCanvas();
+    }
+
+    function removeSelectedItem(itemId) {
+        if (selectedOutfit || !selectedItemIds.includes(itemId)) return;
+        selectedItemIds = selectedItemIds.filter((id) => id !== itemId);
+        renderItems();
+        renderCanvas();
+    }
+
+    function resetDragState() {
+        draggedItemId = null;
+        draggedFromCanvas = false;
+        droppedOnCanvas = false;
+        canvasArea.classList.remove('drag-over');
+        document.querySelectorAll('.cloth-card.dragging').forEach((card) => {
+            card.classList.remove('dragging');
+        });
+    }
+
     function itemCard(item, canvas = false) {
         const isSelected = selectedItemIds.includes(Number(item.item_id));
         const locked = Boolean(selectedOutfit);
-        const image = firstValue(item.image_url);
+        const image = canvas ? '' : firstValue(item.image_url);
+        const draggable = !locked;
         return `
             <button
                 type="button"
                 class="cloth-card${isSelected ? ' selected' : ''}${locked ? ' locked' : ''}"
                 data-item-id="${item.item_id}"
-                ${locked || canvas ? 'disabled' : ''}
+                data-card-source="${canvas ? 'canvas' : 'closet'}"
+                draggable="${draggable ? 'true' : 'false'}"
+                aria-label="${escapeHtml(canvas && !locked ? `Remove ${item.item_name} from outfit` : item.item_name)}"
+                ${locked ? 'disabled' : ''}
             >
-                ${image ? `<div class="cloth-card-image"><img src="${escapeHtml(image)}" alt=""></div>` : ''}
+                ${image ? `<div class="cloth-card-image"><img src="${escapeHtml(image)}" alt="" draggable="false"></div>` : ''}
                 <span class="cloth-card-title">${escapeHtml(item.item_name)}</span>
                 <span class="cloth-card-meta">${escapeHtml(firstValue(item.category) || firstValue(item.tag) || '')}</span>
                 <span class="cloth-card-sub">${escapeHtml(firstValue(item.color) || '')}</span>
@@ -126,14 +157,9 @@ document.addEventListener('DOMContentLoaded', () => {
         clothesGrid.innerHTML = rows.map((item) => itemCard(item)).join('');
         if (!selectedOutfit) {
             clothesGrid.querySelectorAll('.cloth-card').forEach((card) => {
-                card.addEventListener('click', () => {
-                    const itemId = Number(card.dataset.itemId);
-                    selectedItemIds = selectedItemIds.includes(itemId)
-                        ? selectedItemIds.filter((id) => id !== itemId)
-                        : [...selectedItemIds, itemId];
-                    renderItems();
-                    renderCanvas();
-                });
+                card.addEventListener('click', () => addSelectedItem(Number(card.dataset.itemId)));
+                card.addEventListener('dragstart', handleCardDragStart);
+                card.addEventListener('dragend', handleCardDragEnd);
             });
         }
     }
@@ -145,7 +171,59 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         canvasArea.innerHTML = rows.map((item) => itemCard(item, true)).join('');
+        if (!selectedOutfit) {
+            canvasArea.querySelectorAll('.cloth-card').forEach((card) => {
+                card.addEventListener('click', () => removeSelectedItem(Number(card.dataset.itemId)));
+                card.addEventListener('dragstart', handleCardDragStart);
+                card.addEventListener('dragend', handleCardDragEnd);
+            });
+        }
     }
+
+    function handleCardDragStart(event) {
+        if (selectedOutfit) {
+            event.preventDefault();
+            return;
+        }
+        const card = event.currentTarget;
+        draggedItemId = Number(card.dataset.itemId);
+        draggedFromCanvas = card.dataset.cardSource === 'canvas';
+        droppedOnCanvas = false;
+        card.classList.add('dragging');
+        event.dataTransfer.effectAllowed = draggedFromCanvas ? 'move' : 'copy';
+        event.dataTransfer.setData('text/plain', String(draggedItemId));
+    }
+
+    function handleCardDragEnd(event) {
+        const itemId = draggedItemId;
+        const shouldRemove = draggedFromCanvas && !droppedOnCanvas && itemId;
+        event.currentTarget.classList.remove('dragging');
+        resetDragState();
+        if (shouldRemove) {
+            removeSelectedItem(itemId);
+        }
+    }
+
+    canvasArea.addEventListener('dragover', (event) => {
+        if (selectedOutfit || !draggedItemId) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = draggedFromCanvas ? 'move' : 'copy';
+        canvasArea.classList.add('drag-over');
+    });
+
+    canvasArea.addEventListener('dragleave', (event) => {
+        if (!canvasArea.contains(event.relatedTarget)) {
+            canvasArea.classList.remove('drag-over');
+        }
+    });
+
+    canvasArea.addEventListener('drop', (event) => {
+        if (selectedOutfit || !draggedItemId) return;
+        event.preventDefault();
+        droppedOnCanvas = true;
+        canvasArea.classList.remove('drag-over');
+        addSelectedItem(Number(event.dataTransfer.getData('text/plain')) || draggedItemId);
+    });
 
     function renderOutfitSummary() {
         if (!selectedOutfit) {
