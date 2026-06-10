@@ -209,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (addWardrobeBtn) addWardrobeBtn.style.display = 'none';
                 if (backBtn) backBtn.style.display = 'inline-flex';
                 if (catalogTools) catalogTools.style.display = 'grid';
+                loadOptions();
                 if (wardrobeTitle) wardrobeTitle.innerText = `Inside ${clickedItem.querySelector('h3').innerText}`;
                 const openedLabel = clickedItem.querySelector('.wardrobe-count');
                 if (openedLabel) openedLabel.style.display = 'none';
