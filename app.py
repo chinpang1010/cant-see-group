@@ -1,3 +1,6 @@
+# Main Flask application for the wardrobe management system
+# This file defines page routes and API endpoints used by the frontend
+
 from pathlib import Path
 from sqlite3 import IntegrityError
 from uuid import uuid4
@@ -20,6 +23,7 @@ SEASONS = ("Spring", "Summer", "Autumn", "Winter")
 init_db()
 
 
+# Helper functions for request data, login checks, and API responses
 def _payload():
     return request.get_json(silent=True) or request.form.to_dict(flat=False) or {}
 
@@ -164,6 +168,8 @@ def admin_alias():
     return redirect(url_for("admin"))
 
 
+# Authentication APIs: login, signup, and logout
+# After login, user information is stored in Flask session
 @app.route("/api/auth/login", methods=["POST"])
 def api_login():
     data = _payload()
@@ -215,6 +221,8 @@ def api_logout():
     return jsonify({"success": True})
 
 
+# Save uploaded clothing or outfit images into the static/uploads folder
+# The filename is changed to a random UUID to avoid duplicate names
 @app.route("/api/uploads", methods=["POST"])
 def api_upload_image():
     if _authenticated_user_id() is None:
@@ -236,6 +244,8 @@ def api_upload_image():
     return jsonify({"success": True, "image_url": f"/static/uploads/{filename}"}), 201
 
 
+# Wardrobe APIs: load, create, rename, and delete wardrobes
+# Each wardrobe belongs to the currently logged-in user
 @app.route("/api/wardrobes", methods=["GET", "POST"])
 def api_wardrobes():
     user_id = _authenticated_user_id()
@@ -254,6 +264,7 @@ def api_wardrobes():
     return jsonify({"success": True, "closet": dict(closet)}), 201
 
 
+# Update or delete one wardrobe after checking ownership
 @app.route("/api/wardrobes/<int:closet_id>", methods=["PUT", "DELETE"])
 def api_wardrobe_detail(closet_id):
     user_id = _authenticated_user_id()
@@ -281,6 +292,7 @@ def api_wardrobe_detail(closet_id):
     return jsonify({"success": True, "closet": dict(Closet.get(closet_id))})
 
 
+# Load clothing items from one wardrobe
 @app.route("/api/closet/<int:closet_id>/items")
 def api_closet_items(closet_id):
     user_id = _authenticated_user_id()
@@ -292,6 +304,8 @@ def api_closet_items(closet_id):
     return _json_rows(ClothItem.get_by_closet(closet_id, _item_filters()))
 
 
+# Clothing item APIs: search, create, update, and delete clothing items
+# Items can be filtered by keyword, category, color, and tag
 @app.route("/api/items", methods=["GET", "POST"])
 def api_items():
     user_id = _authenticated_user_id()
@@ -377,6 +391,8 @@ def api_item_detail(item_id):
     return jsonify({"success": True, "item": dict(ClothItem.get(item_id))})
 
 
+# Outfit APIs: create and manage reusable outfits
+# An outfit is made by combining multiple clothing items
 @app.route("/api/outfits", methods=["GET", "POST"])
 def api_outfits():
     user_id = _authenticated_user_id()
@@ -417,6 +433,7 @@ def api_outfits():
     return jsonify({"success": True, "outfit_id": outfit_id}), 201
 
 
+# Manage one outfit and keep its item list fixed after it has wear records
 @app.route("/api/outfits/<int:outfit_id>", methods=["GET", "PUT", "DELETE"])
 def api_outfit_detail(outfit_id):
     user_id = _authenticated_user_id()
@@ -474,6 +491,8 @@ def api_outfit_detail(outfit_id):
     return jsonify({"success": True, "outfit_id": outfit_id})
 
 
+# Wear record APIs: record what the user wore on a specific date
+# A record can reuse an existing outfit or create a new one from selected items
 @app.route("/api/records", methods=["GET", "POST"])
 def api_records():
     user_id = _authenticated_user_id()
@@ -530,6 +549,7 @@ def api_records():
     return jsonify({"success": True, "outfit_id": outfit_id}), 201
 
 
+# Update or delete one wear record using the outfit ID and record date
 @app.route("/api/records/<int:outfit_id>", methods=["PUT", "DELETE"])
 def api_record_detail(outfit_id):
     user_id = _authenticated_user_id()
@@ -569,6 +589,7 @@ def api_record_detail(outfit_id):
         return jsonify({"success": True})
 
 
+# Load form options such as categories, colors, tags, closets, and outfits
 @app.route("/api/options")
 def api_options():
     user_id = _authenticated_user_id()
@@ -577,6 +598,7 @@ def api_options():
     return jsonify(ClothItem.options(user_id))
 
 
+# Report API used by the dashboard to summarize wardrobe usage
 @app.route("/api/reports")
 def api_reports():
     user_id = _authenticated_user_id()

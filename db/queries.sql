@@ -1,5 +1,5 @@
 -- Query 1: Join query
--- List clothing items with their owner, closet, category, color, and tag.
+-- Show each clothing item with their owner, closet, category, color, and tag
 SELECT
     U.username,
     C.c_name AS closet_name,
@@ -18,7 +18,7 @@ LEFT JOIN CLOTH_TAG T ON I.item_id = T.item_id
 ORDER BY U.username, C.c_name, I.item_name;
 
 -- Query 2: Aggregation and grouping query
--- Count clothing items by category for the wardrobe catalog report.
+-- Count how many clothing items are in each category, including those without a category
 SELECT
     COALESCE(K.category, 'Uncategorized') AS category,
     COUNT(DISTINCT I.item_id) AS item_count
@@ -28,7 +28,7 @@ GROUP BY COALESCE(K.category, 'Uncategorized')
 ORDER BY item_count DESC, category ASC;
 
 -- Query 3: Subquery
--- Find outfits that contain at least three clothing items.
+-- Find outfits that contain at least three clothing items
 SELECT
     O.outfit_id,
     O.outfit_name,
@@ -43,7 +43,7 @@ WHERE O.outfit_id IN (
 ORDER BY O.created_date DESC;
 
 -- Query 4: Usage report
--- Rank items by how often they appear in recorded outfits.
+-- Show how often each item has been worn based on outfit records
 SELECT
     I.item_id,
     I.item_name,
