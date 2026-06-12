@@ -1,3 +1,6 @@
+# Database operation layer for the wardrobe system
+# Each class groups SQL queries related to one main entity
+
 from datetime import datetime
 from pathlib import Path
 
@@ -8,6 +11,8 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT_DIR / "db/schema.sql"
 
 
+# Small wrapper around the SQLite connection
+# It centralizes common operations such as execute, fetch, commit, and rollback
 class DB:
     @staticmethod
     def connect():
@@ -53,6 +58,7 @@ def _today():
     return datetime.now().strftime("%Y-%m-%d")
 
 
+# Convert comma-separated values or lists into a clean list without duplicates
 def _as_list(value):
     if value is None:
         return []
@@ -72,12 +78,15 @@ def _row_to_dict(row):
     return dict(row) if row else None
 
 
+# Initialize the database schema and insert sample data if needed
 def init_db():
     schema_sql = SCHEMA_PATH.read_text(encoding="utf-8")
     DB.executescript(schema_sql)
     DB.commit()
     seed_data()
 
+
+# Insert sample users, closets, clothes, outfit, and record for demo use
 def seed_data():
     if DB.fetchone("SELECT COUNT(*) FROM USER")[0] > 0:
         return
@@ -153,6 +162,7 @@ def seed_data():
     DB.commit()
 
 
+# Member-related database operations for login, signup, and admin user listing
 class Member:
     @staticmethod
     def get_member(username):
@@ -223,6 +233,8 @@ class Member:
         return DB.fetchone("SELECT role, username FROM USER WHERE u_id = ?", (user_id,))
 
 
+# Closet-related database operations
+# A closet represents one wardrobe owned by a user
 class Closet:
     @staticmethod
     def get_all(user_id=None):
@@ -273,6 +285,8 @@ class Closet:
         )[0]
 
 
+# Clothing item database operations
+# Tags, categories, colors, and images are stored separately for each item
 class ClothItem:
     BASE_SELECT = """
         SELECT
@@ -529,6 +543,8 @@ class ClothItem:
         }
 
 
+# Outfit database operations
+# The INCLUDES table connects outfits with their clothing items
 class Outfit:
     @staticmethod
     def _replace_values(table, column, outfit_id, values):
@@ -689,6 +705,8 @@ class Outfit:
         return cursor.rowcount > 0
 
 
+# Wear record database operations
+# A record stores when an outfit was worn and the user's feedback
 class Record:
     @staticmethod
     def add(data):
@@ -761,7 +779,6 @@ class Record:
 
     @staticmethod
     def update(outfit_id, datetime_str, data):
-        """Update an existing record"""
         cursor = DB.execute(
             """
             UPDATE RECORD
@@ -782,7 +799,6 @@ class Record:
 
     @staticmethod
     def delete(outfit_id, datetime_str, user_id=None):
-        """Delete one wear record without deleting the reusable outfit."""
         owner_clause = ""
         params = [outfit_id, datetime_str]
         if user_id is not None:
@@ -805,6 +821,7 @@ class Record:
         return {"record_deleted": cursor.rowcount > 0, "outfit_deleted": False}
 
 
+# Dashboard report queries for counts, item usage, and recent records
 class Reports:
     @staticmethod
     def overview(user_id=1):
