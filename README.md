@@ -41,6 +41,8 @@ cant-see-group/
 |   `-- record.html
 `-- static/
     |-- admin.css
+    |-- admin.js
+    |-- nav.css
     |-- outfits.css
     |-- outfits.js
     |-- style.css
